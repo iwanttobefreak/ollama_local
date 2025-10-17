@@ -8,7 +8,7 @@ Definición básica
 {
   "type": "function",
   "function": {
-    "name": "execute_command",
+    "name": "ejecutar_comando",   <-- nombre de la función, podría ser: consulta_temperatura, suma_numero.....
     "description": "Ejecuta comandos del sistema de forma segura",
     "parameters": {
       "type": "object",
