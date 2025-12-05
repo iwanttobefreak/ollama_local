@@ -256,7 +256,7 @@ Escribe /bye para salir, /help para ayuda
 Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 >>> Que temperatura va a hacer mañana en Madrid
 ```
-
+```
 > [DEBUG] Ollama llamó a la tool 1 vez/veces!
 > [DEBUG] Función: obtener_pronostico_temperatura
 > [DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
@@ -269,5 +269,5 @@ Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 > [DEBUG] Resultado: Pronóstico para Madrid:
 > HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
 > {"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
-
+```
 
