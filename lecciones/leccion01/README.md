@@ -248,7 +248,7 @@ KEYWORDS = [
 
 Ejemplo de tool simple para obtener temperatura:
 ```
-python tool_simple_temperatura.py
+python tool__temperatura_minima.py
 ```
 
 >Escribe /bye para salir, /help para ayuda
@@ -274,10 +274,10 @@ HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
 {"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
 ```
 
-Otro ejemplo de Tool es tool_simple_temperatura.py que no usa llamadas a scripts y tiene todo el código incluido. Busca la ciudad en openstreetMap y luego consulta en open-meteo.
+Otro ejemplo de Tool es tool_temperatura_avanzada.py que no usa llamadas a scripts y tiene todo el código incluido. Busca la ciudad en openstreetMap y luego consulta en open-meteo.
 
 ```
-python tool_simple_temperatura.py
+python tool_temperatura_avanzada.py
 Escribe /bye para salir, /help para ayuda
 Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 >>> Que temperatura va a hacer mañana en Madrid
@@ -295,9 +295,9 @@ HOY (Viernes): 5-12°C, Nublado, lluvia 25%, viento 12 km/h...
 {"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"1"}}
 ```
 
-Si queremos que la Tool haga varias llamadas, tenemos que incluir instrucciones, por ejemplo la Tool tool_multiple_temperatura.py
+Para poder hacer varias llamadas, tenemos que incluir instrucciones.
 
-A la hora de definir el prompt le decimos:
+A la hora de definir el prompt tenemos definido en tool__temperatura_avanzada.py:
 ```
     messages = [
         {
@@ -316,7 +316,7 @@ IMPORTANTE:
 Ahora le podemos preguntar comparando dos ciudades
 
 ```
-python tool_multiple_temperatura.py
+python tool__temperatura_avanzada.py
 Escribe /bye para salir, /help para ayuda
 Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 >>> ¿Dónde va a hacer mas calor mañana, en Barcelona o en Huesca?
