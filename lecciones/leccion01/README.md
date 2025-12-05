@@ -1,8 +1,12 @@
 Hacemos una pregunta al LLM local:
 
-```ollama run llama3.1:8b```
+```
+ollama run llama3.1:8b
+```
 
-```¿que tiempo va a hacer mañana en Madrid?```
+```
+¿que tiempo va a hacer mañana en Madrid?
+```
 
 Cómo solo es un modelo de lenguaje y no tiene conexión con internet responde:
 
