@@ -34,9 +34,7 @@ async def handle_list_tools() -> list[types.Tool]:
                     "dias": {
                         "type": "integer",
                         "description": "Número de días de pronóstico (1-16). Por defecto: 3",
-                        "default": 3,
-                        "minimum": 1,
-                        "maximum": 16
+                        "default": 3
                     }
                 },
                 "required": ["ciudad"]
