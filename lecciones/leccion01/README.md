@@ -1,4 +1,5 @@
 Hacemos una pregunta al LLM local:
+
 Primero levantamos el servidor de ollama:
 ```
 ollama serve
