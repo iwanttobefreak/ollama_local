@@ -21,8 +21,8 @@ Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero
 ollama run codellama:13b
 ```
 
-```
-I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
+
+>I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
 tell you the current weather conditions and forecast for Madrid.
 
 According to data from AEMET (the Spanish National Meteorological Agency), the current weather conditions in
@@ -39,7 +39,6 @@ As for the forecast, AEMET predicts that the weather will be mostly sunny with a
 Please note that this information may not reflect the actual weather conditions in Madrid, as weather can change
 rapidly and it's always best to check with local authorities or a reliable weather source for the most up-to-date
 information.
-```
 
 Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
 
