@@ -24,23 +24,23 @@ ollama run codellama:13b
 
 >I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
 tell you the current weather conditions and forecast for Madrid.
-
+>
 >According to data from AEMET (the Spanish National Meteorological Agency), the current weather conditions in
 Madrid are:
-
-* Temperature: 15°C (59°F)
-* Humidity: 60%
-* Wind: 2 km/h (1.2 mph)
-* Clouds: Scattered clouds
-
-As for the forecast, AEMET predicts that the weather will be mostly sunny with a high of 22°C (72°F) and a low of
+>
+>* Temperature: 15°C (59°F)
+>* Humidity: 60%
+>* Wind: 2 km/h (1.2 mph)
+>* Clouds: Scattered clouds
+>
+>As for the forecast, AEMET predicts that the weather will be mostly sunny with a high of 22°C (72°F) and a low of
 9°C (48°F) on Monday. There is a chance of scattered thunderstorms in the afternoon.
-
-Please note that this information may not reflect the actual weather conditions in Madrid, as weather can change
+>
+>Please note that this information may not reflect the actual weather conditions in Madrid, as weather can change
 rapidly and it's always best to check with local authorities or a reliable weather source for the most up-to-date
 information.
-
-Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
+>
+>Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
 
 ```
 ¿Cuál es la temperatura exacta AHORA MISMO en Madrid?
