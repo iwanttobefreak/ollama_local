@@ -1,14 +1,6 @@
-```diff
-- Texto en rojo (eliminado)
-+ Texto en verde (añadido)
-! Texto en naranja (modificado)
-# Texto en gris (comentario)
-```
-
 Hacemos una pregunta al LLM local:
 
-> ```diff
-> + ollama run llama3.1:8b
+> ollama run llama3.1:8b
 
 > ```bash
 > ¿que tiempo va a hacer mañana en Madrid?
