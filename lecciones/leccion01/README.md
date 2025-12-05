@@ -10,10 +10,10 @@ ollama run llama3.1:8b
 
 Cómo solo es un modelo de lenguaje y no tiene conexión con internet responde:
 
-```
-Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
+
+> Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
 sugerirte algunas formas de obtener la información que buscas
-```
+
 
 Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado:
 
