@@ -68,13 +68,28 @@ async def handle_call_tool(
     script_dir = os.path.join(os.path.dirname(__file__), "..", "leccion01")
     script_path = os.path.join(script_dir, "script_pronostico_temperatura.py")
     
+    # Verificar que el script existe
+    if not os.path.exists(script_path):
+        return [types.TextContent(
+            type="text",
+            text=f"Error: No se encuentra el script en {script_path}"
+        )]
+    
+    # Detectar el comando Python correcto (python3 o python)
+    python_cmd = 'python3'
+    try:
+        subprocess.run(['python3', '--version'], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        python_cmd = 'python'
+    
     # Ejecutar el script de temperatura
     try:
         resultado = subprocess.run(
-            ['python3', script_path, ciudad, str(dias)],
+            [python_cmd, script_path, ciudad, str(dias)],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
+            cwd=script_dir  # Ejecutar desde el directorio del script
         )
         
         if resultado.returncode == 0:
@@ -84,9 +99,13 @@ async def handle_call_tool(
             )]
         else:
             error_msg = resultado.stderr if resultado.stderr else "Error desconocido"
+            # Incluir también stdout por si hay información útil
+            full_error = f"STDERR: {error_msg}"
+            if resultado.stdout:
+                full_error += f"\nSTDOUT: {resultado.stdout}"
             return [types.TextContent(
                 type="text",
-                text=f"Error al obtener temperatura: {error_msg}"
+                text=f"Error al obtener temperatura:\n{full_error}"
             )]
     except subprocess.TimeoutExpired:
         return [types.TextContent(
@@ -96,7 +115,7 @@ async def handle_call_tool(
     except Exception as e:
         return [types.TextContent(
             type="text",
-            text=f"Error ejecutando script: {str(e)}"
+            text=f"Error ejecutando script: {str(e)}\nRuta script: {script_path}"
         )]
 
 async def main():

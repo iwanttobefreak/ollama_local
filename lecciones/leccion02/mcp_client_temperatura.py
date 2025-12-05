@@ -105,6 +105,11 @@ async def main():
                             
                             resultado_texto = resultado.content[0].text
                             
+                            # Debug: mostrar si hay error
+                            if "Error" in resultado_texto or "error" in resultado_texto:
+                                print(f"\n⚠️  DEBUG - Respuesta del servidor:")
+                                print("   " + "\n   ".join(resultado_texto.split('\n')[:10]))
+                            
                             # Añadir resultado al historial
                             mensajes.append(respuesta['message'])
                             mensajes.append({
