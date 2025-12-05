@@ -25,7 +25,7 @@ ollama run codellama:13b
 >I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
 tell you the current weather conditions and forecast for Madrid.
 
-According to data from AEMET (the Spanish National Meteorological Agency), the current weather conditions in
+>According to data from AEMET (the Spanish National Meteorological Agency), the current weather conditions in
 Madrid are:
 
 * Temperature: 15°C (59°F)
