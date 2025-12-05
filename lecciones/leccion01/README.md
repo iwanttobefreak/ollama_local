@@ -173,9 +173,9 @@ TOOL_DEFINITION = {
 
 ### Componentes clave:
 
-- **description**: Lo que lee el LLM para decidir **cuándo** usar la función
-- **parameters**: Qué parámetros extrae el LLM de la petición del usuario
-- **required**: Parámetros obligatorios para el funcionamiento de la tool
+- **`description`**: Lo que lee el LLM para decidir **cuándo** usar la función
+- **`parameters`**: Qué parámetros extrae el LLM de la petición del usuario
+- **`required`**: Parámetros obligatorios para el funcionamiento de la tool
 
 El LLM decide "quiero usar esta tool con estos parámetros" y devuelve un json que lo ejecuta el script de python que está escrito debajo de la **TOOL_DEFINITION**.
 
@@ -246,5 +246,28 @@ KEYWORDS = [
 ]
 ```
 
+Ejemplo de tool simple para obtener temperatura:
+```
+python tool_simple_temperatura.py
+```
+
+```
+Escribe /bye para salir, /help para ayuda
+Busca el tiempo de CUALQUIER ciudad de España (sin límites)
+>>> Que temperatura va a hacer mañana en Madrid
+```
+
+>[DEBUG] Ollama llamó a la tool 1 vez/veces!
+>[DEBUG] Función: obtener_pronostico_temperatura
+>[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
+>[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
+>[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+>[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
+>[FUNC DEBUG] Llamando a Open-Meteo API...
+>[FUNC DEBUG] Status code: 200
+>[FUNC DEBUG] Éxito! Devolviendo pronóstico
+>[DEBUG] Resultado: Pronóstico para Madrid:
+>HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
+>{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
 
 
