@@ -257,17 +257,17 @@ Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 >>> Que temperatura va a hacer mañana en Madrid
 ```
 
->[DEBUG] Ollama llamó a la tool 1 vez/veces!
->[DEBUG] Función: obtener_pronostico_temperatura
->[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
->[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
->[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
->[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
->[FUNC DEBUG] Llamando a Open-Meteo API...
->[FUNC DEBUG] Status code: 200
->[FUNC DEBUG] Éxito! Devolviendo pronóstico
->[DEBUG] Resultado: Pronóstico para Madrid:
->HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
->{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
+> [DEBUG] Ollama llamó a la tool 1 vez/veces!
+> [DEBUG] Función: obtener_pronostico_temperatura
+> [DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
+> [FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
+> [FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+> [FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
+> [FUNC DEBUG] Llamando a Open-Meteo API...
+> [FUNC DEBUG] Status code: 200
+> [FUNC DEBUG] Éxito! Devolviendo pronóstico
+> [DEBUG] Resultado: Pronóstico para Madrid:
+> HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
+> {"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
 
 
