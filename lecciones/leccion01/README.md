@@ -1,13 +1,20 @@
 Hacemos una pregunta al LLM local:
+
 ollama run llama3.1:8b
+
 ```¿que tiempo va a hacer mañana en Madrid?```
+
 Cómo solo es un modelo de leguaje y no tiene conexión con internet es:
+
 ```
 Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
 sugerirte algunas formas de obtener la información que buscas
 ```
+
 Ojo porque si le preguntamos lo mismo a codellama:13b nos responde pero se lo ha inventado:
+
 ```ollama run codellama:13b```
+
 ```
 I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
 tell you the current weather conditions and forecast for Madrid.
