@@ -171,11 +171,11 @@ TOOL_DEFINITION = {
 }
 ```
 
-### 🔍 Componentes clave:
+### Componentes clave:
 
-- ** `description`**: Lo que lee el LLM para decidir **cuándo** usar la función
-- ** `parameters`**: Qué parámetros extrae el LLM de la petición del usuario
-- ** `required`**: Parámetros obligatorios para el funcionamiento de la tool
+- **description**: Lo que lee el LLM para decidir **cuándo** usar la función
+- **parameters**: Qué parámetros extrae el LLM de la petición del usuario
+- **required**: Parámetros obligatorios para el funcionamiento de la tool
 
 El LLM decide "quiero usar esta tool con estos parámetros" y devuelve un json que lo ejecuta el script de python que está escrito debajo de la **TOOL_DEFINITION**.
 
