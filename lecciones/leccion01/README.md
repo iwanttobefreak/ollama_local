@@ -1,20 +1,25 @@
 Hacemos una pregunta al LLM local:
 
-> ollama run llama3.1:8b
+```bash 
+ollama run llama3.1:8b
+```
 
-> ```bash
-> ¿que tiempo va a hacer mañana en Madrid?
+```
+¿que tiempo va a hacer mañana en Madrid?
+```
 
-Cómo solo es un modelo de leguaje y no tiene conexión con internet es:
+Cómo solo es un modelo de leguaje y no tiene conexión con internet responde:
 
 ```
 Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
 sugerirte algunas formas de obtener la información que buscas
 ```
 
-Ojo porque si le preguntamos lo mismo a codellama:13b nos responde pero se lo ha inventado:
+Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado:
 
-> ollama run codellama:13b
+```bash
+ollama run codellama:13b
+```
 
 ```
 I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
@@ -35,8 +40,11 @@ Please note that this information may not reflect the actual weather conditions 
 rapidly and it's always best to check with local authorities or a reliable weather source for the most up-to-date
 information.
 ```
+
 Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
+
 ```¿Cuál es la temperatura exacta AHORA MISMO en Madrid?```
+
 ```
 No puedo proporcionarte la temperatura exacta en Madrid AHORA MISMO. La información meteorológica actual se basa
 en los datos de las estaciones meteorológicas, que pueden estar ubicadas en diferentes puntos de la ciudad y puede
