@@ -7,8 +7,8 @@
 
 Hacemos una pregunta al LLM local:
 
-> ```bash
-> ollama run llama3.1:8b
+> ```diff
+> + ollama run llama3.1:8b
 
 > ```bash
 > ¿que tiempo va a hacer mañana en Madrid?
