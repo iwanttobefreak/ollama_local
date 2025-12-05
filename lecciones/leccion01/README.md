@@ -1,5 +1,10 @@
 Hacemos una pregunta al LLM local:
+Primero levantamos el servidor de ollama:
+```
+ollama serve
+```
 
+En otra ventana levantamos el cliente:
 ```
 ollama run llama3.1:8b
 ```
@@ -19,6 +24,10 @@ Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero
 
 ```
 ollama run codellama:13b
+```
+
+```
+¿que tiempo va a hacer mañana en Madrid?
 ```
 
 
@@ -46,19 +55,17 @@ information.
 ¿Cuál es la temperatura exacta AHORA MISMO en Madrid?
 ```
 
-```
-No puedo proporcionarte la temperatura exacta en Madrid AHORA MISMO. La información meteorológica actual se basa
+>No puedo proporcionarte la temperatura exacta en Madrid AHORA MISMO. La información meteorológica actual se basa
 en los datos de las estaciones meteorológicas, que pueden estar ubicadas en diferentes puntos de la ciudad y puede
 haber un delay entre el momento en que se toma la medición y el momento en que se hace disponible.
-
-Sin embargo, puedo proporcionarte una predicción de la temperatura para Madrid en función de las condiciones
+>
+>Sin embargo, puedo proporcionarte una predicción de la temperatura para Madrid en función de las condiciones
 meteorológicas actuales y previstas. Por ejemplo, si la temperatura en Madrid es de 15°C ahora mismo, podría
 predecirse que suba a 17°C en los próximos días si la temperatura promedio es de 16°C durante el día y baja a 9°C
 por la noche.
-
-Por favor, tenga en cuenta que estas son solo predicciones y que la temperatura real puede variar según las
+>
+>Por favor, tenga en cuenta que estas son solo predicciones y que la temperatura real puede variar según las
 condiciones meteorológicas específicas y locales.
-```
 
 Para conectar a internet y usar herramientas externas usamos las tools.
 Primero generamos un script con python que sea capaz de darnos información. Por ejemplo el script **script_pronostico_temperatura.py** que le pasas como parámetro la ciudad y los días y te da el pronóstico
@@ -68,28 +75,26 @@ Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 python script_pronostico_temperatura.py
 ```
 
-```
-======================================================================
+>======================================================================
 PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
 SIN datos hardcodeados - Busqueda dinamica
 ======================================================================
-
-USO: python pronostico_temperatura.py <ciudad> [dias]
-
-EJEMPLOS:
+>
+>USO: python pronostico_temperatura.py <ciudad> [dias]
+>
+>EJEMPLOS:
   python pronostico_temperatura.py Madrid
   python pronostico_temperatura.py Barcelona 7
   python pronostico_temperatura.py Mataro 5
   python pronostico_temperatura.py "San Sebastian" 3
   python pronostico_temperatura.py Alcobendas 4
 
-CARACTERISTICAS:
+>CARACTERISTICAS:
   - Busca CUALQUIER ciudad de España
   - NO usa datos hardcodeados
   - Usa OpenStreetMap para geocoding
   - Usa Open-Meteo para el pronostico (sin API key)
   - Hasta 16 dias de pronostico
-```
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
 ```
