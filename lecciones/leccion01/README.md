@@ -17,7 +17,9 @@ sugerirte algunas formas de obtener la información que buscas
 
 Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado:
 
-```ollama run codellama:13b```
+```
+ollama run codellama:13b
+```
 
 ```
 I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
@@ -41,7 +43,9 @@ information.
 
 Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
 
-```¿Cuál es la temperatura exacta AHORA MISMO en Madrid?```
+```
+¿Cuál es la temperatura exacta AHORA MISMO en Madrid?
+```
 
 ```
 No puedo proporcionarte la temperatura exacta en Madrid AHORA MISMO. La información meteorológica actual se basa
@@ -61,7 +65,9 @@ Para conectar a internet y usar herramientas externas usamos las tools.
 Primero generamos un script con python que sea capaz de darnos información. Por ejemplo el script **script_pronostico_temperatura.py** que le pasas como parámetro la ciudad y los días y te da el pronóstico
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
-``` python script_pronostico_temperatura.py ```
+```
+python script_pronostico_temperatura.py
+```
 
 ```
 ======================================================================
@@ -87,7 +93,9 @@ CARACTERISTICAS:
 ```
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
-```python script_pronostico_temperatura.py Barcelona 2```
+```
+python script_pronostico_temperatura.py Barcelona 2
+```
 
 ```
 ======================================================================
@@ -235,5 +243,4 @@ KEYWORDS = [
 ```
 
 
-- **⚡ Activación rápida** de la tool apropiada
-- **🔄 Filtrado eficiente** de consultas relevantes
+
