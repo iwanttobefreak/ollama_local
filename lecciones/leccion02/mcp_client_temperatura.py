@@ -95,6 +95,13 @@ async def main():
                             tool_name = tool_call['function']['name']
                             tool_args = tool_call['function']['arguments']
                             
+                            # Convertir 'dias' a entero si existe (Ollama a veces lo envía como string)
+                            if 'dias' in tool_args and isinstance(tool_args['dias'], str):
+                                try:
+                                    tool_args['dias'] = int(tool_args['dias'])
+                                except ValueError:
+                                    pass  # Si no se puede convertir, dejar como está
+                            
                             print(f"   🔧 Herramienta: {tool_name}")
                             print(f"   📝 Ciudad: {tool_args.get('ciudad')}")
                             if 'dias' in tool_args:
