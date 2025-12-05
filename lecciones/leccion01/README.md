@@ -1,12 +1,8 @@
 Hacemos una pregunta al LLM local:
 
-```bash 
-ollama run llama3.1:8b
-```
+```ollama run llama3.1:8b```
 
-```
-¿que tiempo va a hacer mañana en Madrid?
-```
+```¿que tiempo va a hacer mañana en Madrid?```
 
 Cómo solo es un modelo de leguaje y no tiene conexión con internet responde:
 
@@ -17,9 +13,7 @@ sugerirte algunas formas de obtener la información que buscas
 
 Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado:
 
-```bash
-ollama run codellama:13b
-```
+```ollama run codellama:13b```
 
 ```
 I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
@@ -58,13 +52,77 @@ por la noche.
 Por favor, tenga en cuenta que estas son solo predicciones y que la temperatura real puede variar según las
 condiciones meteorológicas específicas y locales.
 ```
+
 Para conectar a internet y usar herramientas externas usamos las tools.
 Primero generamos un script con python que sea capaz de darnos información. Por ejemplo el script **script_pronostico_temperatura.py** que le pasas como parámetro la ciudad y los días y te da el pronóstico
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
+
 ```python script_pronostico_temperatura.py```
 
+```
+======================================================================
+PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
+SIN datos hardcodeados - Busqueda dinamica
+======================================================================
+
+USO: python pronostico_temperatura.py <ciudad> [dias]
+
+EJEMPLOS:
+  python pronostico_temperatura.py Madrid
+  python pronostico_temperatura.py Barcelona 7
+  python pronostico_temperatura.py Mataro 5
+  python pronostico_temperatura.py "San Sebastian" 3
+  python pronostico_temperatura.py Alcobendas 4
+
+CARACTERISTICAS:
+  - Busca CUALQUIER ciudad de España
+  - NO usa datos hardcodeados
+  - Usa OpenStreetMap para geocoding
+  - Usa Open-Meteo para el pronostico (sin API key)
+  - Hasta 16 dias de pronostico
+```
+
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
-```python pronostico_temperatura.py Barcelona 7 ```
+```python script_pronostico_temperatura.py Barcelona 2```
+
+```
+======================================================================
+PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
+SIN datos hardcodeados - Busqueda dinamica
+======================================================================
+
+
+[1/3] Buscando 'Barcelona' en OpenStreetMap...
+[OK] Encontrada: Barcelona
+[OK] Provincia: Catalunya
+[OK] Coordenadas: 41.3826, 2.1771
+
+[2/3] Consultando Open-Meteo...
+[3/3] Procesando datos...
+[OK] Datos recibidos
+
+======================================================================
+PRONOSTICO METEOROLOGICO - BARCELONA
+======================================================================
+
+Viernes    05/12/2025  HOY
+  Temperatura:    9.0°C -  13.4°C
+  Clima:        Nublado
+  Prob. lluvia:   0%
+  Viento:         9.9 km/h
+
+Sabado     06/12/2025  MAÑANA
+  Temperatura:    9.8°C -  19.1°C
+  Clima:        Nublado
+  Prob. lluvia:   8%
+  Viento:        12.5 km/h
+
+======================================================================
+Fuente: Open-Meteo (https://open-meteo.com)
+Geocoding: OpenStreetMap Nominatim
+======================================================================
+```
+
 
 Ahora vamos a integrar este script de python con una tool que sea capaz de ejecutar ollama.
 
@@ -99,12 +157,13 @@ TOOL_DEFINITION = {
 
 ### 🔍 Componentes clave:
 
-- **📖 `description`**: Lo que lee el LLM para decidir **cuándo** usar la función
-- **⚙️ `parameters`**: Qué parámetros extrae el LLM de la petición del usuario
-- **❗ `required`**: Parámetros obligatorios para el funcionamiento de la tool
+- ** `description`**: Lo que lee el LLM para decidir **cuándo** usar la función
+- ** `parameters`**: Qué parámetros extrae el LLM de la petición del usuario
+- ** `required`**: Parámetros obligatorios para el funcionamiento de la tool
 
 El LLM decide "quiero usar esta tool con estos parámetros" y devuelve un json que lo ejecuta el script de python que está escrito debajo de la **TOOL_DEFINITION**.
 
+Un ejemplo de prompt que te recoge la pregunta, separa los parámetros y ejecuta el script (API) para obtener temperatura:
 ```
 # Función que ejecuta el script
 def obtener_temp(ciudad):
@@ -141,15 +200,7 @@ while True:
     mensajes.append({'role': 'assistant', 'content': respuesta['message']['content']})
 ```
 
-
-
-
----
-
-## 🤖 Configuración del System Prompt
-
-Para definir más exactamente cómo debe actuar el agente, podemos añadir instrucciones específicas al system prompt:
-
+El system prompt lo podemos ir definiendo más exactamente cómo debe actuar el agente, podemos añadir instrucciones específicas:
 ```python
 messages = [
     {
@@ -165,9 +216,7 @@ IMPORTANTE:
 ]
 ```
 
----
-
-## 🔍 Palabras Clave para Activar la Tool
+## Palabras Clave para Activar la Tool
 
 Lista de keywords que ayudan a detectar cuándo el usuario necesita información meteorológica:
 
@@ -181,7 +230,6 @@ KEYWORDS = [
 ]
 ```
 
-### 💡 Propósito de las keywords:
-- **🎯 Detección automática** de intenciones del usuario
+
 - **⚡ Activación rápida** de la tool apropiada
 - **🔄 Filtrado eficiente** de consultas relevantes
