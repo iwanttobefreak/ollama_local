@@ -1,6 +1,8 @@
 Hacemos una pregunta al LLM local:
 
+```python
 ollama run llama3.1:8b
+```
 
 ```¿que tiempo va a hacer mañana en Madrid?```
 
