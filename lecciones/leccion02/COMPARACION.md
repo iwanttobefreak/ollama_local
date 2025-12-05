@@ -10,7 +10,7 @@
 │  ┌─────────────────────────────────────────────┐   │
 │  │           Ollama Client                     │   │
 │  │  ┌────────────────────────────────────┐     │   │
-│  │  │  LLM (llama3.2:3b)                 │     │   │
+│  │  │  LLM (llama3.1:8b)                 │     │   │
 │  │  │  - Recibe pregunta                 │     │   │
 │  │  │  - Decide usar tool                │     │   │
 │  │  │  - Extrae parámetros               │     │   │
@@ -90,7 +90,7 @@ def ejecutar_script_temperatura(ciudad):
     return resultado.stdout
 
 # Chat loop
-respuesta = ollama.chat(model='llama3.2:3b', messages=mensajes, tools=[TOOL_DEFINITION])
+respuesta = ollama.chat(model='llama3.1:8b', messages=mensajes, tools=[TOOL_DEFINITION])
 if respuesta['message'].get('tool_calls'):
     resultado = ejecutar_script_temperatura(ciudad)
     # Continuar con el resultado...
@@ -127,7 +127,7 @@ async with stdio_client(server_params) as (read, write):
         tools = await session.list_tools()
         
         # Usar con Ollama
-        respuesta = ollama.chat(model='llama3.2:3b', tools=tools)
+        respuesta = ollama.chat(model='llama3.1:8b', tools=tools)
         if respuesta['message'].get('tool_calls'):
             resultado = await session.call_tool(tool_name, tool_args)
 ```

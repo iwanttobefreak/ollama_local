@@ -21,7 +21,7 @@ docker start ollama
 docker exec ollama ollama list
 
 # Descargar modelo si no está
-docker exec ollama ollama pull llama3.2:3b
+docker exec ollama ollama pull llama3.1:8b
 ```
 
 **Opción B: Instalación local**
@@ -92,7 +92,7 @@ python3 mcp_client_minimo.py
 
 **Requisitos:**
 - Ollama corriendo (docker o local)
-- Modelo llama3.2:3b descargado
+- Modelo llama3.1:8b descargado
 
 ```bash
 python3 mcp_client_temperatura.py
@@ -161,10 +161,10 @@ pip install mcp
 **Solución:**
 ```bash
 # Docker
-docker exec ollama ollama pull llama3.2:3b
+docker exec ollama ollama pull llama3.1:8b
 
 # Local
-ollama pull llama3.2:3b
+ollama pull llama3.1:8b
 ```
 
 ### Docker: "Container ollama not found"
@@ -235,11 +235,12 @@ Solo necesitas Ollama para el ejemplo completo con IA.
 
 **Sí.** Edita el archivo `mcp_client_temperatura.py` y cambia:
 ```python
-model='llama3.2:3b'  # Cambia esto
+model='llama3.1:8b'  # Cambia esto
 ```
 
 Modelos recomendados:
-- `llama3.2:3b` - Rápido y ligero (recomendado)
+- `llama3.1:8b` - Excelente para tools (recomendado)
+- `llama3.2:3b` - Rápido y ligero
 - `llama3.1:8b` - Más preciso, más lento
 - `mistral:7b` - Alternativa buena
 

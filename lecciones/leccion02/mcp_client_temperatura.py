@@ -81,7 +81,7 @@ async def main():
                         # Primera llamada: LLM decide si usar herramienta
                         print("🤔 Pensando...", end='', flush=True)
                         respuesta = ollama.chat(
-                            model='llama3.2:3b',
+                            model='llama3.1:8b',
                             messages=mensajes,
                             tools=tools_ollama
                         )
@@ -120,7 +120,7 @@ async def main():
                             # Segunda llamada: LLM procesa el resultado
                             print("🧠 Procesando información...", end='', flush=True)
                             respuesta = ollama.chat(
-                                model='llama3.2:3b',
+                                model='llama3.1:8b',
                                 messages=mensajes
                             )
                             print("\r" + " "*50 + "\r", end='')  # Limpiar línea

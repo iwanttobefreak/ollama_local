@@ -32,6 +32,8 @@ python3 mcp_client_minimo.py
 - [INSTALACION.md](INSTALACION.md) - Guía completa de instalación y troubleshooting
 - [COMPARACION.md](COMPARACION.md) - Comparación detallada Lección 1 vs Lección 2
 - [RESUMEN.md](RESUMEN.md) - Resumen visual y conceptos clave
+- [MODELOS.md](MODELOS.md) - Comparación de modelos Ollama (llama3.1:8b vs llama3.2:3b)
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Solución de problemas comunes
 
 ---
 
@@ -345,7 +347,7 @@ async def main():
                 # Primera llamada: LLM decide
                 print("\n🤔 Pensando...")
                 respuesta = ollama.chat(
-                    model='llama3.2:3b',
+                    model='llama3.1:8b',
                     messages=mensajes,
                     tools=tools_ollama
                 )
@@ -375,7 +377,7 @@ async def main():
                     
                     # Segunda llamada: LLM procesa el resultado
                     respuesta = ollama.chat(
-                        model='llama3.2:3b',
+                        model='llama3.1:8b',
                         messages=mensajes
                     )
                 

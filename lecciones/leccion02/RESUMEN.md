@@ -215,7 +215,7 @@ python3 mcp_client_temperatura.py
 | `ImportError: mcp` | `pip install mcp` |
 | `ImportError: ollama` | `pip install ollama` |
 | `Connection refused` | Ejecuta desde directorio `leccion02` |
-| `Model not found` | `docker exec ollama ollama pull llama3.2:3b` |
+| `Model not found` | `docker exec ollama ollama pull llama3.1:8b` |
 | `Docker ollama not running` | `docker start ollama` |
 
 ---
