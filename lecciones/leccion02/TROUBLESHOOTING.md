@@ -91,6 +91,27 @@ Si falla aquí, el problema está en la conexión a internet o en el script de l
 
 ---
 
+### Problema 5: Input validation error (tipo incorrecto)
+
+**Síntoma:**
+```
+Input validation error: '7' is not of type 'integer'
+```
+
+**Causa:**
+Los parámetros de Ollama llegan como strings pero el schema de MCP espera integers.
+
+**Solución:**
+Este problema ya está resuelto en los archivos actualizados. El servidor MCP ahora convierte automáticamente:
+```python
+# En mcp_server_temperatura.py
+dias = int(dias)  # Convierte string a integer
+```
+
+Si ves este error, asegúrate de tener la última versión de los archivos.
+
+---
+
 ## Pruebas Paso a Paso
 
 ### Test 1: Verificar que el script de temperatura funciona

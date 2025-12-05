@@ -34,6 +34,7 @@ python3 mcp_client_minimo.py
 - [RESUMEN.md](RESUMEN.md) - Resumen visual y conceptos clave
 - [MODELOS.md](MODELOS.md) - Comparación de modelos Ollama (llama3.1:8b vs llama3.2:3b)
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Solución de problemas comunes
+- [VALIDACION_TIPOS.md](VALIDACION_TIPOS.md) - ⚠️ Importante: Cómo validar tipos de parámetros en MCP
 
 ---
 

@@ -42,7 +42,13 @@ async def handle_call_tool(
     if name != "saludar":
         raise ValueError(f"Herramienta desconocida: {name}")
     
+    if not arguments:
+        arguments = {}
+    
     nombre = arguments.get("nombre", "desconocido")
+    
+    # Asegurar que nombre es string
+    nombre = str(nombre)
     
     return [types.TextContent(
         type="text",

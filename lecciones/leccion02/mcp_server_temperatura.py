@@ -61,6 +61,18 @@ async def handle_call_tool(
     ciudad = arguments.get("ciudad")
     dias = arguments.get("dias", 3)
     
+    # Asegurar que dias es un entero
+    try:
+        dias = int(dias)
+    except (ValueError, TypeError):
+        dias = 3
+    
+    # Validar rango de días
+    if dias < 1:
+        dias = 1
+    elif dias > 16:
+        dias = 16
+    
     if not ciudad:
         raise ValueError("El parámetro 'ciudad' es obligatorio")
     
