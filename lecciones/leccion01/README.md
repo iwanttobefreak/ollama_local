@@ -76,25 +76,25 @@ python script_pronostico_temperatura.py
 ```
 
 >======================================================================
-PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
-SIN datos hardcodeados - Busqueda dinamica
-======================================================================
+>PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
+>SIN datos hardcodeados - Busqueda dinamica
+>======================================================================
 >
 >USO: python pronostico_temperatura.py <ciudad> [dias]
 >
 >EJEMPLOS:
-  python pronostico_temperatura.py Madrid
-  python pronostico_temperatura.py Barcelona 7
-  python pronostico_temperatura.py Mataro 5
-  python pronostico_temperatura.py "San Sebastian" 3
-  python pronostico_temperatura.py Alcobendas 4
-
+>  python pronostico_temperatura.py Madrid
+>  python pronostico_temperatura.py Barcelona 7
+>  python pronostico_temperatura.py Mataro 5
+>  python pronostico_temperatura.py "San Sebastian" 3
+>  python pronostico_temperatura.py Alcobendas 4
+>
 >CARACTERISTICAS:
-  - Busca CUALQUIER ciudad de España
-  - NO usa datos hardcodeados
-  - Usa OpenStreetMap para geocoding
-  - Usa Open-Meteo para el pronostico (sin API key)
-  - Hasta 16 dias de pronostico
+>  - Busca CUALQUIER ciudad de España
+>  - NO usa datos hardcodeados
+>  - Usa OpenStreetMap para geocoding
+>  - Usa Open-Meteo para el pronostico (sin API key)
+>  - Hasta 16 dias de pronostico
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
 ```
