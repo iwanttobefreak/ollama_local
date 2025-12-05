@@ -4,7 +4,7 @@ Hacemos una pregunta al LLM local:
 
 ```¿que tiempo va a hacer mañana en Madrid?```
 
-Cómo solo es un modelo de leguaje y no tiene conexión con internet responde:
+Cómo solo es un modelo de lenguaje y no tiene conexión con internet responde:
 
 ```
 Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
@@ -57,7 +57,7 @@ Para conectar a internet y usar herramientas externas usamos las tools.
 Primero generamos un script con python que sea capaz de darnos información. Por ejemplo el script **script_pronostico_temperatura.py** que le pasas como parámetro la ciudad y los días y te da el pronóstico
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
-```python script_pronostico_temperatura.py```
+``` python script_pronostico_temperatura.py ```
 
 ```
 ======================================================================
