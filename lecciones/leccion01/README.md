@@ -251,23 +251,95 @@ Ejemplo de tool simple para obtener temperatura:
 python tool_simple_temperatura.py
 ```
 
+>Escribe /bye para salir, /help para ayuda
+>Busca el tiempo de CUALQUIER ciudad de España (sin límites)
+
+Le introducimos la pregunta:
+>>> Que temperatura va a hacer mañana en Madrid
+
+Respuesta:
+
 ```
+[DEBUG] Ollama llamó a la tool 1 vez/veces!
+[DEBUG] Función: obtener_pronostico_temperatura
+[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
+[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
+[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
+[FUNC DEBUG] Llamando a Open-Meteo API...
+[FUNC DEBUG] Status code: 200
+[FUNC DEBUG] Éxito! Devolviendo pronóstico
+[DEBUG] Resultado: Pronóstico para Madrid:
+HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
+{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
+```
+
+Otro ejemplo de Tool es tool_simple_temperatura.py que no usa llamadas a scripts y tiene todo el código incluido. Busca la ciudad en openstreetMap y luego consulta en open-meteo.
+
+```
+python tool_simple_temperatura.py
 Escribe /bye para salir, /help para ayuda
 Busca el tiempo de CUALQUIER ciudad de España (sin límites)
 >>> Que temperatura va a hacer mañana en Madrid
-```
-```
-> [DEBUG] Ollama llamó a la tool 1 vez/veces!
-> [DEBUG] Función: obtener_pronostico_temperatura
-> [DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
-> [FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
-> [FUNC DEBUG] Buscando ciudad en OpenStreetMap...
-> [FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
-> [FUNC DEBUG] Llamando a Open-Meteo API...
-> [FUNC DEBUG] Status code: 200
-> [FUNC DEBUG] Éxito! Devolviendo pronóstico
-> [DEBUG] Resultado: Pronóstico para Madrid:
-> HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
-> {"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
+[DEBUG] Ollama llamó a la tool 1 vez/veces!
+[DEBUG] Función: obtener_pronostico_temperatura
+[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
+[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
+[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
+[FUNC DEBUG] Llamando a Open-Meteo API...
+[FUNC DEBUG] Status code: 200
+[FUNC DEBUG] Éxito! Devolviendo pronóstico
+[DEBUG] Resultado: Pronóstico para Madrid:
+HOY (Viernes): 5-12°C, Nublado, lluvia 25%, viento 12 km/h...
+{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"1"}}
 ```
 
+Si queremos que la Tool haga varias llamadas, tenemos que incluir instrucciones, por ejemplo la Tool tool_multiple_temperatura.py
+
+A la hora de definir el prompt le decimos:
+```
+    messages = [
+        {
+            'role': 'system',
+            'content': '''Eres un asistente útil con acceso a herramientas meteorológicas para España.
+
+IMPORTANTE:
+- Cuando uses herramientas, SIEMPRE presenta los resultados obtenidos de forma clara
+- NO digas "no tengo acceso a información" si ya obtuviste datos de herramientas
+- Si te preguntan por VARIAS ciudades, usa la herramienta VARIAS VECES (una por ciudad)
+- Para comparaciones (ej: "¿dónde hará más calor, en X o Y?"), llama a la herramienta para CADA ciudad y luego compara los resultados'''
+        }
+    ]
+```
+
+Ahora le podemos preguntar comparando dos ciudades
+
+```
+python tool_multiple_temperatura.py
+Escribe /bye para salir, /help para ayuda
+Busca el tiempo de CUALQUIER ciudad de España (sin límites)
+>>> ¿Dónde va a hacer mas calor mañana, en Barcelona o en Huesca?
+[DEBUG] Ollama llamó a la tool 2 vez/veces!
+[DEBUG] Función: obtener_pronostico_temperatura
+[DEBUG] Argumentos: {'ciudad': 'Barcelona', 'dias': '1'}
+[FUNC DEBUG] Buscando temperatura para: Barcelona, 1 días
+[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+[FUNC DEBUG] Resultado: lat=41.3825802, lon=2.177073, nombre=Barcelona
+[FUNC DEBUG] Llamando a Open-Meteo API...
+[FUNC DEBUG] Status code: 200
+[FUNC DEBUG] Éxito! Devolviendo pronóstico
+[DEBUG] Resultado: Pronóstico para Barcelona:
+HOY (Viernes): 9-14°C, Nublado, lluvia 0%, viento 10 km/h...
+[DEBUG] Función: obtener_pronostico_temperatura
+[DEBUG] Argumentos: {'ciudad': 'Huesca', 'dias': '1'}
+[FUNC DEBUG] Buscando temperatura para: Huesca, 1 días
+[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
+[FUNC DEBUG] Resultado: lat=42.1360615, lon=-0.0298027, nombre=Huesca
+[FUNC DEBUG] Llamando a Open-Meteo API...
+[FUNC DEBUG] Status code: 200
+[FUNC DEBUG] Éxito! Devolviendo pronóstico
+[DEBUG] Resultado: Pronóstico para Huesca:
+HOY (Viernes): 3-11°C, Nublado, lluvia 45%, viento 28 km/h...
+Basándome en los pronósticos obtenidos, mañana hará más calor en Barcelona que en Huesca. La temperatura máxima prevista para Barcelona es de 14°C, mientras que para Huesca es de 11°C.
+```
