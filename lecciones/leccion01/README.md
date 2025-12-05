@@ -101,43 +101,42 @@ Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutam
 python script_pronostico_temperatura.py Barcelona 2
 ```
 
-```
-======================================================================
-PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
-SIN datos hardcodeados - Busqueda dinamica
-======================================================================
-
-
-[1/3] Buscando 'Barcelona' en OpenStreetMap...
-[OK] Encontrada: Barcelona
-[OK] Provincia: Catalunya
-[OK] Coordenadas: 41.3826, 2.1771
-
-[2/3] Consultando Open-Meteo...
-[3/3] Procesando datos...
-[OK] Datos recibidos
-
-======================================================================
-PRONOSTICO METEOROLOGICO - BARCELONA
-======================================================================
-
-Viernes    05/12/2025  HOY
-  Temperatura:    9.0°C -  13.4°C
-  Clima:        Nublado
-  Prob. lluvia:   0%
-  Viento:         9.9 km/h
-
-Sabado     06/12/2025  MAÑANA
-  Temperatura:    9.8°C -  19.1°C
-  Clima:        Nublado
-  Prob. lluvia:   8%
-  Viento:        12.5 km/h
-
-======================================================================
-Fuente: Open-Meteo (https://open-meteo.com)
-Geocoding: OpenStreetMap Nominatim
-======================================================================
-```
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
+>SIN datos hardcodeados - Busqueda dinamica
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+>
+>[1/3] Buscando 'Barcelona' en OpenStreetMap...
+>[OK] Encontrada: Barcelona
+>[OK] Provincia: Catalunya
+>[OK] Coordenadas: 41.3826, 2.1771
+>
+>[2/3] Consultando Open-Meteo...
+>[3/3] Procesando datos...
+>[OK] Datos recibidos
+>
+> 
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>PRONOSTICO METEOROLOGICO - BARCELONA
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>
+>Viernes    05/12/2025  HOY
+>  Temperatura:    9.0°C -  13.4°C
+>  Clima:        Nublado
+>  Prob. lluvia:   0%
+>  Viento:         9.9 km/h
+>
+>Sabado     06/12/2025  MAÑANA
+>  Temperatura:    9.8°C -  19.1°C
+>  Clima:        Nublado
+>  Prob. lluvia:   8%
+>  Viento:        12.5 km/h
+>
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+>Fuente: Open-Meteo (https://open-meteo.com)
+>Geocoding: OpenStreetMap Nominatim
+> - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 Ahora vamos a integrar este script de python con una tool que sea capaz de ejecutar ollama.
