@@ -75,10 +75,10 @@ Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 python script_pronostico_temperatura.py
 ```
 
-> ======================================================================
+> ----------------------------------------------------------------------
 > PRONOSTICO DE TEMPERATURA - CUALQUIER Ciudad de España
 > SIN datos hardcodeados - Busqueda dinamica
-> ======================================================================
+> ----------------------------------------------------------------------
 >
 >USO: python pronostico_temperatura.py <ciudad> [dias]
 >
