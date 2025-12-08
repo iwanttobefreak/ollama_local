@@ -16,4 +16,4 @@ docker run --name ollama_api -p 5000:5000 -p 11434:11434 -v $DIR_OLLAMA/scrics:/
 
 curl -X POST http://localhost:5000/resumir \
      -H "Content-Type: application/json" \
-     -d '{"persona":"laia"}'
+     -d '{"persona":"Jandro"}'

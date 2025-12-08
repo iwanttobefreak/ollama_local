@@ -48,63 +48,56 @@ ollama serve &
 echo "⏳ Esperando que Ollama esté listo..."
 sleep 5
 
-# Verificar que Ollama está respondiendo
+# Verificar que Ollama responde
 if curl -s http://localhost:11434/api/version > /dev/null; then
     echo "✅ Ollama serve iniciado correctamente en puerto 11434"
 else
     echo "⚠️  Ollama serve iniciado, pero no responde aún. Puede tardar unos segundos..."
 fi
 
+# Verificar e instalar modelo si es necesario
+echo "🤖 Verificando modelos disponibles..."
+MODELS_RESPONSE=$(curl -s http://localhost:11434/api/tags)
+if echo "$MODELS_RESPONSE" | grep -q "llama3.2:1b"; then
+    echo "✅ Modelo llama3.2:1b ya está disponible"
+else
+    echo "📥 Modelo llama3.2:1b no encontrado. Instalando modelo básico..."
+    echo "⏳ Esto puede tardar varios minutos..."
+    
+    # Instalar un modelo más pequeño y rápido para testing
+    ollama pull llama3.2:1b &
+    MODEL_PULL_PID=$!
+    echo "✅ Descarga de modelo iniciada (PID: $MODEL_PULL_PID)"
+    
+    # Esperar a que el modelo se descargue (timeout de 5 minutos)
+    timeout 300 bash -c "while ! curl -s http://localhost:11434/api/tags | grep -q 'llama3.2:1b'; do sleep 5; done" && echo "✅ Modelo descargado exitosamente" || echo "⚠️  Timeout en descarga de modelo, continuando de todos modos..."
+fi
+
 # Iniciar la API de Flask en background
 echo "🌐 Iniciando API Ollama Server..."
-if [ -f "/scrics/chats/api_ollama_server.py" ]; then
-    cd /scrics/chats
+if [ -f "/app/scrics/chats/api_ollama_server.py" ]; then
+    echo "📁 Cambiando a directorio: /app/scrics/chats"
+    cd /app/scrics/chats
+    echo "📄 Archivo encontrado: $(ls -la api_ollama_server.py)"
+    echo "🐍 Ejecutando: python3 api_ollama_server.py"
+    echo "🔧 Entorno virtual: $VIRTUAL_ENV"
+    echo "🐍 Python path: $(which python3)"
+    
+    # Ejecutar en background
     python3 api_ollama_server.py &
     API_PID=$!
     echo "✅ API Ollama Server iniciado (PID: $API_PID) en puerto 5000"
 else
-    echo "⚠️  Archivo api_ollama_server.py no encontrado en /scrics/chats/"
+    echo "⚠️  Archivo api_ollama_server.py no encontrado en /app/scrics/chats/"
+    ls -la /app/scrics/chats/ 2>/dev/null || echo "Directorio no existe"
 fi
 
 echo "========================================================"
 echo "🎉 Contenedor listo!"
 echo "   - Entorno virtual: $VIRTUAL_ENV"
 echo "   - Ollama corriendo en: http://localhost:11434"
-echo "   - API Server corriendo en: http://localhost:5000"
+echo "   - API Flask en: http://localhost:5000"
 echo "========================================================"
 
-# Función para manejar señales de terminación
-cleanup() {
-    echo "🛑 Recibida señal de terminación. Deteniendo servicios..."
-    if [ ! -z "$API_PID" ]; then
-        kill $API_PID 2>/dev/null || true
-        echo "✅ API Server detenido"
-    fi
-    pkill -f "ollama serve" 2>/dev/null || true
-    echo "✅ Ollama serve detenido"
-    exit 0
-}
-
-# Configurar manejador de señales
-trap cleanup SIGTERM SIGINT
-
-# Mantener el contenedor corriendo y supervisar procesos
-echo "👀 Supervisando servicios..."
-while true; do
-    # Verificar que Ollama sigue corriendo
-    if ! pgrep -f "ollama serve" > /dev/null; then
-        echo "❌ Ollama serve se detuvo. Reiniciando..."
-        ollama serve &
-    fi
-
-    # Verificar que la API sigue corriendo (si se inició)
-    if [ ! -z "$API_PID" ] && ! kill -0 $API_PID 2>/dev/null; then
-        echo "❌ API Server se detuvo. Reiniciando..."
-        cd /scrics/chats
-        python3 api_ollama_server.py &
-        API_PID=$!
-        echo "✅ API Server reiniciado (PID: $API_PID)"
-    fi
-
-    sleep 10
-done
+# Mantener el contenedor corriendo
+wait

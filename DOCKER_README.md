@@ -15,10 +15,10 @@ cd /Users/T054810/ollama_local
 docker run --rm -d --name ollama \
   -p 11434:11434 -p 5000:5000 \
   --memory="16g" \
+  -v /Users/T054810//ia/ollama/chats:/app/chats \
   -v /Users/T054810/ollama_local/scrics:/scrics \
-  -v /Users/T054810/ia/ollama/usr_local_lib:/usr/local/lib \
   -v /Users/T054810/ia/ollama/root_ollama:/root/.ollama \
-  -ti ollama
+  ollama
 ```
 
 ## 📊 Servicios Automáticos
