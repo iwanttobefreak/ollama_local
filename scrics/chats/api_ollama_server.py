@@ -8,8 +8,8 @@ import requests
 # -----------------------------
 # Configuración Ollama
 # -----------------------------
-OLLAMA_URL = "http://localhost:11434/v1/chat/completions"
-MODEL_NAME = "llama3.1:latest"
+OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL_NAME = "llama3.1:8b"
 HISTORIAL_DIR = "historial"
 CONTEXTOS_DIR = "contextos"
 
@@ -87,11 +87,15 @@ def preguntar_a_ollama(nombre_persona, pregunta):
     try:
         response = requests.post(
             OLLAMA_URL,
-            json={"model": MODEL_NAME, "messages": messages}
+            json={
+                "model": MODEL_NAME,
+                "messages": messages,
+                "stream": False
+            }
         )
         response.raise_for_status()
         data = response.json()
-        assistant_msg = data["choices"][0]["message"]["content"]
+        assistant_msg = data["message"]["content"]
 
         # Guardar en historial
         guardar_historial(nombre_persona, pregunta, assistant_msg)
@@ -102,8 +106,26 @@ def preguntar_a_ollama(nombre_persona, pregunta):
         return None
 
 # -----------------------------
-# Función para resumir historial
+# Función para verificar Ollama
 # -----------------------------
+def verificar_ollama():
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get("models", [])
+            model_names = [model["name"] for model in models]
+            if MODEL_NAME in model_names:
+                print(f"✅ Modelo {MODEL_NAME} disponible")
+                return True
+            else:
+                print(f"❌ Modelo {MODEL_NAME} no encontrado. Modelos disponibles: {model_names}")
+                return False
+        else:
+            print("❌ Ollama no responde correctamente")
+            return False
+    except Exception as e:
+        print(f"❌ Error conectando con Ollama: {e}")
+        return False
 def resumir_historial(nombre_persona):
     archivo = os.path.join(HISTORIAL_DIR, f"{nombre_persona}_history.txt")
     if not os.path.exists(archivo):
@@ -134,14 +156,18 @@ def resumir_historial(nombre_persona):
     try:
         response = requests.post(
             OLLAMA_URL,
-            json={"model": MODEL_NAME, "messages":[
-                {"role":"system", "content": contexto} if contexto else {},
-                {"role":"user","content": prompt_resumen}
-            ]}
+            json={
+                "model": MODEL_NAME,
+                "messages": [
+                    {"role":"system", "content": contexto if contexto else "Eres un asistente útil que resume conversaciones."},
+                    {"role":"user","content": prompt_resumen}
+                ],
+                "stream": False
+            }
         )
         response.raise_for_status()
         data = response.json()
-        resumen = data["choices"][0]["message"]["content"]
+        resumen = data["message"]["content"]
 
         # Guardar resumen en el historial
         with open(archivo, "w", encoding="utf-8") as f:
@@ -206,5 +232,15 @@ def resumir():
     )
 
 if __name__ == "__main__":
+    print("🚀 Iniciando API Ollama Server...")
+    print(f"📡 Ollama URL: {OLLAMA_URL}")
+    print(f"🤖 Modelo: {MODEL_NAME}")
+
+    # Verificar que Ollama esté disponible
+    if not verificar_ollama():
+        print("❌ No se puede iniciar la API sin Ollama funcionando correctamente")
+        exit(1)
+
+    print("🌐 Iniciando servidor Flask en puerto 5000...")
     app.run(host="0.0.0.0", port=5000, debug=True)
 
