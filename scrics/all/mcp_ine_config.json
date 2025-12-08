@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ine-poblacion": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\joseantonio.legidoma\\copilot\\apis\\mcp_ine_server.py"
+      ],
+      "description": "Servidor MCP para consultar poblacion de España en el INE",
+      "env": {}
+    }
+  }
+}

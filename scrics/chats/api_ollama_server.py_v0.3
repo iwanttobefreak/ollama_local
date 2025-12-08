@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+# api_ollama_server.py
+#
+# Servidor Flask que recibe {"persona": "...", "pregunta": "..."}
+# y contesta usando Ollama, cargando contexto + historial de forma robusta.
+
+import os
+import re
+import json
+import requests
+from flask import Flask, request, Response
+
+# -----------------------------
+# Configuración
+# -----------------------------
+HISTORIAL_DIR = "historial"
+CONTEXT_DIR = "contextos"
+OLLAMA_URL = "http://localhost:11434/v1/chat/completions"
+MODEL = "llama3.1:latest"
+TIMEOUT = 30  # segundos para la petición a Ollama
+
+app = Flask(__name__)
+
+# -----------------------------
+# Utilidades para contexto/historial
+# -----------------------------
+def cargar_contexto(nombre_persona):
+    """Carga contexto JSON desde contextos/<persona>.json si existe."""
+    path = os.path.join(CONTEXT_DIR, f"{nombre_persona}.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except Exception:
+            return None
+
+def cargar_historial(nombre_persona):
+    """
+    Lee historial desde historial/<persona>_history.txt y lo parsea de forma robusta.
+    Acepta entradas multilínea: cualquier línea que comience por "Usuario:" o "<Persona>:" inicia
+    una nueva entrada; las líneas siguientes que no empiecen por cabecera se concatenan a la última entrada.
+    Se ignoran otras cabeceras no esperadas (ej. "Resumen:") excepto cuando van seguidas por "<Persona>:" o "Usuario:".
+    Devuelve lista de dicts en formato [{'role':'user','content':...}, {'role':'assistant','content':...}, ...]
+    """
+    archivo = os.path.join(HISTORIAL_DIR, f"{nombre_persona}_history.txt")
+    if not os.path.exists(archivo):
+        return []
+
+    with open(archivo, "r", encoding="utf-8") as f:
+        raw_lines = [line.rstrip("\n") for line in f]
+
+    entries = []
+    current_role = None
+    current_text_lines = []
+
+    # Prepare regex for headers: Usuario: or NombrePersona:
+    nombre_cap = nombre_persona.capitalize()
+    header_re = re.compile(rf'^(Usuario|{re.escape(nombre_cap)}):\s*(.*)$')
+
+    for line in raw_lines:
+        m = header_re.match(line)
+        if m:
+            # flush previous
+            if current_role and current_text_lines:
+                content = "\n".join(current_text_lines).strip()
+                if content:
+                    entries.append({"role": current_role, "content": content})
+            # start new
+            hdr = m.group(1)
+            rest = m.group(2) or ""
+            if hdr == "Usuario":
+                current_role = "user"
+            else:
+                current_role = "assistant"
+            current_text_lines = [rest] if rest else []
+        else:
+            # line does not start with expected header: append to current if exists,
+            # otherwise ignore (handles stray "Resumen:" blocks)
+            if current_role is not None:
+                current_text_lines.append(line)
+            else:
+                # try detect if line starts with "<Persona>:" without match due to spacing
+                alt_m = re.match(rf'^{re.escape(nombre_cap)}:\s*(.*)$', line)
+                if alt_m:
+                    current_role = "assistant"
+                    current_text_lines = [alt_m.group(1)]
+                else:
+                    # ignore stray lines before any header
+                    continue
+
+    # flush last
+    if current_role and current_text_lines:
+        content = "\n".join(current_text_lines).strip()
+        if content:
+            entries.append({"role": current_role, "content": content})
+
+    return entries
+
+# -----------------------------
+# Generar mensajes para Ollama
+# -----------------------------
+def generar_mensajes(contexto, historial_entries, pregunta, nombre_persona):
+    """
+    Crea la lista de mensajes para enviar a /v1/chat/completions.
+    - Añade un system message con resumen breve del contexto si existe.
+    - Añade todo el historial (user/assistant) convertido en messages.
+    - Añade finalmente el mensaje de la nueva pregunta como role=user.
+    """
+    messages = []
+
+    # System message con contexto si existe
+    if contexto:
+        sys_lines = [
+            "Contexto de la persona:",
+            f"Nombre: {contexto.get('nombre','')}",
+            f"Relación: {contexto.get('relacion','')}",
+            f"Personalidad: {contexto.get('personalidad','')}",
+        ]
+        proyectos = contexto.get("proyectos")
+        if proyectos:
+            sys_lines.append("Proyectos: " + "; ".join(proyectos))
+        sys_lines.append("")  # separación
+        sys_lines.append(
+            "Instrucciones: actúa como esta persona. Responde de forma natural y coherente. "
+            "Mantén memoria del contexto y usa el historial mostrado. Si no sabes, no inventes."
+        )
+        messages.append({"role": "system", "content": "\n".join(sys_lines)})
+
+    # Añadir historial (si hay)
+    for entry in historial_entries:
+        role = entry.get("role")
+        content = entry.get("content", "")
+        if role == "user":
+            messages.append({"role": "user", "content": content})
+        else:
+            messages.append({"role": "assistant", "content": content})
+
+    # Mensaje del usuario actual
+    messages.append({"role": "user", "content": pregunta})
+
+    return messages
+
+# -----------------------------
+# Preguntar a Ollama
+# -----------------------------
+def preguntar_a_ollama(nombre_persona, pregunta):
+    """
+    Carga contexto + historial, genera mensajes y envía petición a Ollama.
+    Devuelve el texto de la respuesta (string) o None si hay error.
+    """
+    contexto = cargar_contexto(nombre_persona)
+    historial = cargar_historial(nombre_persona)
+    messages = generar_mensajes(contexto, historial, pregunta, nombre_persona)
+
+    payload = {
+        "model": MODEL,
+        "messages": messages,
+        "n": 1
+    }
+
+    try:
+        resp = requests.post(OLLAMA_URL, json=payload, timeout=TIMEOUT)
+    except requests.RequestException as e:
+        app.logger.error("Error conectando con Ollama: %s", e)
+        return None
+
+    if resp.status_code != 200:
+        app.logger.error("Ollama devolvió status %s: %s", resp.status_code, resp.text)
+        return None
+
+    try:
+        data = resp.json()
+        # Estructura esperada: choices[0].message.content
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        app.logger.error("Error parseando respuesta de Ollama: %s", e)
+        app.logger.debug("Respuesta cruda de Ollama: %s", resp.text)
+        return None
+
+# -----------------------------
+# Endpoint Flask
+# -----------------------------
+@app.route("/preguntar", methods=["POST"])
+def preguntar():
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return Response(json.dumps({"error": "JSON inválido"}, ensure_ascii=False), status=400, mimetype="application/json")
+
+    if not data or "persona" not in data or "pregunta" not in data:
+        return Response(json.dumps({"error": "Faltan parámetros 'persona' y 'pregunta'."}, ensure_ascii=False),
+                        status=400, mimetype="application/json")
+
+    persona = str(data["persona"]).lower()
+    pregunta_text = str(data["pregunta"])
+
+    app.logger.info("Pregunta recibida: persona=%s pregunta=%s", persona, pregunta_text[:120])
+
+    respuesta = preguntar_a_ollama(persona, pregunta_text)
+
+    if respuesta is None:
+        return Response(json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False),
+                        status=500, mimetype="application/json")
+
+    return Response(json.dumps({"persona": persona, "pregunta": pregunta_text, "respuesta": respuesta}, ensure_ascii=False),
+                    status=200, mimetype="application/json")
+
+
+# -----------------------------
+# Arranque
+# -----------------------------
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="API Ollama server")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("API_OLLAMA_PORT", 5000)))
+    parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
+
+    app.run(host=args.host, port=args.port, debug=args.debug)
+

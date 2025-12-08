@@ -1,0 +1,31 @@
+from flask import Flask, request, jsonify
+from api_ollama import preguntar_a_ollama  # Usamos tu script funcional actual
+
+app = Flask(__name__)
+
+# Endpoint principal
+@app.route("/preguntar", methods=["POST"])
+def preguntar():
+    data = request.get_json()
+
+    if not data or "persona" not in data or "pregunta" not in data:
+        return jsonify({"error": "Faltan parámetros 'persona' y 'pregunta'"}), 400
+
+    persona = data["persona"]
+    pregunta = data["pregunta"]
+
+    respuesta = preguntar_a_ollama(persona, pregunta)
+
+    if respuesta is None:
+        return jsonify({"error": "No se pudo obtener respuesta de Ollama"}), 500
+
+    return jsonify({
+        "persona": persona,
+        "pregunta": pregunta,
+        "respuesta": respuesta
+    })
+
+# Arrancar el servidor
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+

@@ -1,0 +1,44 @@
+from flask import Flask, request, Response
+import json
+from api_ollama import preguntar_a_ollama  # Tu script funcional actual con historial
+
+app = Flask(__name__)
+
+@app.route("/preguntar", methods=["POST"])
+def preguntar():
+    data = request.get_json()
+
+    if not data or "persona" not in data or "pregunta" not in data:
+        return Response(
+            json.dumps({"error": "Faltan parámetros 'persona' y 'pregunta'"}, ensure_ascii=False),
+            mimetype="application/json",
+            status=400
+        )
+
+    persona = data["persona"]
+    pregunta = data["pregunta"]
+
+    respuesta = preguntar_a_ollama(persona, pregunta)
+
+    if respuesta is None:
+        return Response(
+            json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False),
+            mimetype="application/json",
+            status=500
+        )
+
+    # JSON con ensure_ascii=False para que UTF-8 se mantenga legible
+    return Response(
+        json.dumps({
+            "persona": persona,
+            "pregunta": pregunta,
+            "respuesta": respuesta
+        }, ensure_ascii=False),
+        mimetype="application/json"
+    )
+
+if __name__ == "__main__":
+    # host="0.0.0.0" permite que Flask escuche en todas las interfaces
+    # port=5000 es el puerto de la API
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
