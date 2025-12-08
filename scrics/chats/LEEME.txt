@@ -1,0 +1,19 @@
+curl -X POST http://localhost:3000/send \
+  -H "Content-Type: application/json" \
+  -d '{"numero":"34644598826","mensaje":"Hola desde Docker API!"}'
+  
+curl -X POST http://localhost:5000/preguntar \
+     -H "Content-Type: application/json" \
+     -d '{"persona":"jandro", "pregunta":"¿Como se llama mi padre"}'
+
+curl -X POST http://localhost:5000/preguntar \
+     -H "Content-Type: application/json" \
+     -d '{"persona":"laia", "pregunta":"¿Prefieres ir al teatro o un concierto"}'
+
+export DIR_OLLAMA=/media/jose/2Tb/ia/ollama
+docker run --name ollama_api -p 5000:5000 -p 11434:11434 -v $DIR_OLLAMA/scrics:/scrics -v $DIR_OLLAMA/usr_local_lib:/usr/local/lib -v $DIR_OLLAMA/root_ollama:/root/.ollama -ti ollama_api
+
+
+curl -X POST http://localhost:5000/resumir \
+     -H "Content-Type: application/json" \
+     -d '{"persona":"laia"}'
