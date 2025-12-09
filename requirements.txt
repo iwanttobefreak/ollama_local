@@ -16,5 +16,8 @@ python-dotenv>=1.0.0
 # Frameworks web
 flask>=2.0.0
 
-langchain_community
-langchain-text-splitters
+#Para el diario
+langchain_chroma>=1.0.0
+langchain_classic>=1.0.0
+langchain_ollama>=1.0.0
+langchain_text_splitters>=1.0.0
