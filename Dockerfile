@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM debian:13
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -24,8 +24,8 @@ RUN python3 -m venv /ollama-agente
 RUN /ollama-agente/bin/pip install --upgrade pip && \
     /ollama-agente/bin/pip install -r requirements.txt
 
-# Copiar archivos del proyecto
-COPY . .
+RUN rm /etc/localtime && \
+    ln -s /usr/share/zoneinfo/Europe/Madrid /etc/localtime 
 
 # Copiar y configurar script de entrada
 COPY docker-entrypoint.sh /docker-entrypoint.sh

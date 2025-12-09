@@ -4,6 +4,72 @@ import os
 import shutil
 from datetime import datetime
 import requests
+
+# ...existing code...
+
+app = Flask(__name__)
+
+# --- Endpoint para añadir eventos ---
+@app.route("/anadir_evento", methods=["POST"])
+def anadir_evento():
+    logger.info("🔄 Endpoint /anadir_evento llamado")
+    try:
+        data = request.get_json()
+        logger.debug(f"📥 Datos recibidos: {data}")
+
+        required = ["persona", "tipo", "nombre", "lugar", "fecha"]
+        if not data or not all(k in data for k in required):
+            logger.warning("❌ Faltan parámetros obligatorios: persona, tipo, nombre, lugar, fecha")
+            return Response(
+                json.dumps({"error": "Faltan parámetros obligatorios: persona, tipo, nombre, lugar, fecha"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=400
+            )
+
+        persona = data["persona"]
+        evento = {
+            "tipo": data["tipo"],
+            "nombre": data["nombre"],
+            "lugar": data["lugar"],
+            "fecha": data["fecha"]
+        }
+        if "notas" in data:
+            evento["notas"] = data["notas"]
+
+        archivo = os.path.join(CONTEXTOS_DIR, f"{persona}.json")
+        if os.path.exists(archivo):
+            with open(archivo, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+        else:
+            datos = {"nombre": persona, "eventos": []}
+
+        if "eventos" not in datos or not isinstance(datos["eventos"], list):
+            datos["eventos"] = []
+        datos["eventos"].append(evento)
+
+        with open(archivo, "w", encoding="utf-8") as f:
+            json.dump(datos, f, ensure_ascii=False, indent=2)
+
+        logger.info(f"✅ Evento añadido para {persona}")
+        return Response(
+            json.dumps({"mensaje": f"Evento añadido para {persona}"}, ensure_ascii=False),
+            mimetype="application/json"
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Error inesperado en endpoint /anadir_evento: {e}")
+        logger.error(f"   Traceback: {traceback.format_exc()}")
+        return Response(
+            json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False),
+            mimetype="application/json",
+            status=500
+        )
+from flask import Flask, request, Response
+import json
+import os
+import shutil
+from datetime import datetime
+import requests
 import logging
 import traceback
 
@@ -409,6 +475,149 @@ def resumir_historial(nombre_persona):
 # -----------------------------
 app = Flask(__name__)
 
+
+# --- Endpoint para añadir eventos con texto coloquial ---
+@app.route("/anadir_evento_colloquial", methods=["POST"])
+def anadir_evento_colloquial():
+    logger.info("🔄 Endpoint /anadir_evento_colloquial llamado")
+    try:
+        data = request.get_json()
+        logger.debug(f"📥 Datos recibidos: {data}")
+        if not data or "texto" not in data:
+            logger.warning("❌ Falta parámetro 'texto'")
+            return Response(
+                json.dumps({"error": "Falta parámetro 'texto'"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=400
+            )
+        texto = data["texto"]
+        # Prompt aún más detallado para extracción
+        prompt = (
+            "Extrae los siguientes campos de evento de este texto y devuélvelos en JSON válido con las claves: persona, tipo, nombre, lugar, fecha, notas.\n"
+            "- Si aparece 'con [nombre]' en el texto, pon ese nombre en el campo 'persona'.\n"
+            "- El campo 'tipo' debe ser la actividad principal (por ejemplo: cena, comida, concierto).\n"
+            "- El campo 'nombre' debe ser el nombre del restaurante, artista, lugar, etc.\n"
+            "- El campo 'lugar' es la ciudad o localización.\n"
+            "- El campo 'fecha' es la fecha del evento.\n"
+            "- El campo 'notas' es cualquier detalle adicional.\n"
+            "No inventes datos, pero usa la información que encuentres en el texto. Si algún campo no está, déjalo vacío.\n"
+            "\nEjemplo 1:\n"
+            "TEXTO: he ido con Laia a cenar al restaurante Coque de Madrid el 8 de diciembre de 2025 y me gustó mucho la comida\n"
+            "JSON:\n"
+            "{\n  \"persona\": \"Laia\",\n  \"tipo\": \"cena\",\n  \"nombre\": \"Coque\",\n  \"lugar\": \"Madrid\",\n  \"fecha\": \"8 de diciembre de 2025\",\n  \"notas\": \"Me gustó mucho la comida\"\n}\n"
+            "\nEjemplo 2:\n"
+            "TEXTO: fuimos con Jandro al concierto de Vetusta Morla en WiZink Center el 5 de mayo de 2024, fue espectacular\n"
+            "JSON:\n"
+            "{\n  \"persona\": \"Jandro\",\n  \"tipo\": \"concierto\",\n  \"nombre\": \"Vetusta Morla\",\n  \"lugar\": \"WiZink Center\",\n  \"fecha\": \"5 de mayo de 2024\",\n  \"notas\": \"fue espectacular\"\n}\n"
+            f"\nTEXTO: {texto}\nJSON:"
+        )
+        messages = [{"role": "user", "content": prompt}]
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "messages": messages,
+                "stream": False
+            },
+            timeout=60
+        )
+        logger.debug(f"📥 Respuesta de Ollama: status={response.status_code}")
+        if response.status_code != 200:
+            logger.error(f"❌ Error HTTP de Ollama: {response.status_code} - {response.text}")
+            return Response(
+                json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=500
+            )
+        data_ollama = response.json()
+        if "message" not in data_ollama or "content" not in data_ollama["message"]:
+            logger.error(f"❌ Respuesta de Ollama malformada: {data_ollama}")
+            return Response(
+                json.dumps({"error": "Respuesta de Ollama malformada"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=500
+            )
+        # Intentar extraer el primer bloque JSON de la respuesta
+        import re
+        import json as pyjson
+        respuesta_llm = data_ollama["message"]["content"]
+        logger.debug(f"📝 Respuesta LLM: {respuesta_llm}")
+        # Buscar todos los bloques JSON válidos
+        matches = re.findall(r'\{[\s\S]*?\}', respuesta_llm)
+        if not matches:
+            logger.error("❌ No se encontró JSON en la respuesta de Ollama")
+            return Response(
+                json.dumps({"error": "No se encontró JSON en la respuesta de Ollama"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=500
+            )
+        evento = None
+        for bloque in matches:
+            try:
+                posible = pyjson.loads(bloque)
+            except Exception as e:
+                continue
+            # Si es un dict con campos relevantes y no todos vacíos
+            campos = ["persona", "tipo", "nombre", "lugar", "fecha"]
+            if all(k in posible for k in campos) and any(posible.get(k) for k in campos):
+                evento = posible
+                break
+            # Si es un dict con 'eventos' como lista, usar el primer evento válido
+            if "eventos" in posible and isinstance(posible["eventos"], list):
+                for ev in posible["eventos"]:
+                    if all(k in ev for k in campos) and any(ev.get(k) for k in campos):
+                        # Prompt mejorado para extracción robusta
+                        break
+                if evento:
+                    break
+        if not evento:
+            logger.error("❌ No se encontró ningún evento válido en los bloques JSON")
+            return Response(
+                json.dumps({"error": "No se encontró ningún evento válido en los bloques JSON"}, ensure_ascii=False),
+                mimetype="application/json",
+                status=500
+            )
+        # Si el campo persona está vacío, intentar inferirlo del texto original
+        persona = evento.get("persona")
+        if not persona:
+            texto_original = data["texto"]
+            persona_match = re.search(r"con ([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)", texto_original)
+            if persona_match:
+                persona = persona_match.group(1)
+                logger.info(f"🔎 Persona inferida del texto: {persona}")
+            else:
+                logger.warning("❌ No se pudo extraer el campo 'persona' del texto")
+                return Response(
+                    json.dumps({"error": "No se pudo extraer el campo 'persona' del texto"}, ensure_ascii=False),
+                    mimetype="application/json",
+                    status=400
+                )
+        archivo = os.path.join(CONTEXTOS_DIR, f"{persona}.json")
+        if os.path.exists(archivo):
+            with open(archivo, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+        else:
+            datos = {"nombre": persona, "eventos": []}
+        if "eventos" not in datos or not isinstance(datos["eventos"], list):
+            datos["eventos"] = []
+        evento_guardar = {k: v for k, v in evento.items() if k != "persona"}
+        datos["eventos"].append(evento_guardar)
+        with open(archivo, "w", encoding="utf-8") as f:
+            json.dump(datos, f, ensure_ascii=False, indent=2)
+        logger.info(f"✅ Evento añadido para {persona} (colloquial)")
+        return Response(
+            json.dumps({"mensaje": f"Evento añadido para {persona}"}, ensure_ascii=False),
+            mimetype="application/json"
+        )
+    except Exception as e:
+        logger.error(f"❌ Error inesperado en endpoint /anadir_evento_colloquial: {e}")
+        logger.error(f"   Traceback: {traceback.format_exc()}")
+        return Response(
+            json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False),
+            mimetype="application/json",
+            status=500
+        )
+
 @app.route("/preguntar", methods=["POST"])
 def preguntar():
     logger.info("🔄 Endpoint /preguntar llamado")
@@ -416,20 +625,104 @@ def preguntar():
         data = request.get_json()
         logger.debug(f"📥 Datos recibidos: {data}")
 
-        if not data or "persona" not in data or "pregunta" not in data:
-            logger.warning("❌ Faltan parámetros 'persona' y 'pregunta'")
+
+        if not data or "pregunta" not in data:
+            logger.warning("❌ Falta parámetro 'pregunta'")
             return Response(
-                json.dumps({"error": "Faltan parámetros 'persona' y 'pregunta'"}, ensure_ascii=False),
+                json.dumps({"error": "Falta parámetro 'pregunta'"}, ensure_ascii=False),
                 mimetype="application/json",
                 status=400
             )
 
-        persona = data["persona"]
         pregunta = data["pregunta"]
-        logger.info(f"👤 Procesando pregunta para persona: {persona}")
-        logger.debug(f"❓ Pregunta: {pregunta}")
+        persona = data.get("persona")
+        logger.debug(f"❓ Pregunta recibida: {pregunta}")
+        if persona:
+            logger.info(f"👤 Procesando pregunta para persona: {persona}")
+            contexto = cargar_contexto(persona)
+            logger.debug(f"🧩 Contexto usado: {contexto}")
+            historial = cargar_historial(persona)
+            logger.debug(f"📚 Historial usado: {historial}")
+            messages = generar_mensajes(contexto, historial, pregunta)
+            logger.debug(f"📝 Mensajes enviados a Ollama: {messages}")
+            try:
+                response = requests.post(
+                    OLLAMA_URL,
+                    json={
+                        "model": MODEL_NAME,
+                        "messages": messages,
+                        "stream": False
+                    },
+                    timeout=60
+                )
+                logger.debug(f"📥 Respuesta de Ollama: status={response.status_code}")
+                if response.status_code != 200:
+                    logger.error(f"❌ Error HTTP de Ollama: {response.status_code} - {response.text}")
+                    return Response(
+                        json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False),
+                        mimetype="application/json",
+                        status=500
+                    )
+                data_ollama = response.json()
+                if "message" not in data_ollama or "content" not in data_ollama["message"]:
+                    logger.error(f"❌ Respuesta de Ollama malformada: {data_ollama}")
+                    return Response(
+                        json.dumps({"error": "Respuesta de Ollama malformada"}, ensure_ascii=False),
+                        mimetype="application/json",
+                        status=500
+                    )
+                respuesta = data_ollama["message"]["content"]
+                # Guardar en historial
+                guardar_historial(persona, pregunta, respuesta)
+            except Exception as e:
+                logger.error(f"❌ Error inesperado en pregunta persona: {e}")
+                logger.error(f"   Traceback: {traceback.format_exc()}")
+                return Response(
+                    json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False),
+                    mimetype="application/json",
+                    status=500
+                )
+        else:
+            logger.info("🤖 Procesando pregunta general (sin persona)")
+            # Prompt general sin contexto ni historial
+            messages = [{"role": "user", "content": str(pregunta)}]
+            logger.debug(f"📝 Mensaje enviado a Ollama: {messages}")
+            try:
+                response = requests.post(
+                    OLLAMA_URL,
+                    json={
+                        "model": MODEL_NAME,
+                        "messages": messages,
+                        "stream": False
+                    },
+                    timeout=60
+                )
+                logger.debug(f"📥 Respuesta de Ollama: status={response.status_code}")
+                if response.status_code != 200:
+                    logger.error(f"❌ Error HTTP de Ollama: {response.status_code} - {response.text}")
+                    return Response(
+                        json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False),
+                        mimetype="application/json",
+                        status=500
+                    )
+                data_ollama = response.json()
+                if "message" not in data_ollama or "content" not in data_ollama["message"]:
+                    logger.error(f"❌ Respuesta de Ollama malformada: {data_ollama}")
+                    return Response(
+                        json.dumps({"error": "Respuesta de Ollama malformada"}, ensure_ascii=False),
+                        mimetype="application/json",
+                        status=500
+                    )
+                respuesta = data_ollama["message"]["content"]
+            except Exception as e:
+                logger.error(f"❌ Error inesperado en pregunta general: {e}")
+                logger.error(f"   Traceback: {traceback.format_exc()}")
+                return Response(
+                    json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False),
+                    mimetype="application/json",
+                    status=500
+                )
 
-        respuesta = preguntar_a_ollama(persona, pregunta)
         if respuesta is None:
             logger.error("❌ No se pudo obtener respuesta de Ollama")
             return Response(
@@ -440,7 +733,7 @@ def preguntar():
 
         logger.info("✅ Respuesta generada exitosamente")
         return Response(
-            json.dumps({"persona": persona, "pregunta": pregunta, "respuesta": respuesta}, ensure_ascii=False),
+            json.dumps({"pregunta": pregunta, "respuesta": respuesta, "persona": persona}, ensure_ascii=False),
             mimetype="application/json"
         )
 

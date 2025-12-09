@@ -1,0 +1,5 @@
+pip install langchain langchain-community langchain-chroma ollama
+pip install langchain langchain-community langchain-chroma langchain-text-splitters ollama
+
+ollama pull nomic-embed-text
+

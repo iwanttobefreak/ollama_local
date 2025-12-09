@@ -16,5 +16,4 @@ python-dotenv>=1.0.0
 # Frameworks web
 flask>=2.0.0
 
-
-
+langchain_community
