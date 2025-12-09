@@ -8,8 +8,8 @@ from langchain_text_splitters import CharacterTextSplitter
 # --- CONFIGURACIÓN ---
 OLLAMA_LLM_MODEL = "llama3.1:8b" 
 OLLAMA_EMBED_MODEL = "nomic-embed-text" 
-DIARY_FILE = "diario_personal_vida.txt" # El fichero consolidado del RAG
-PERSIST_DIR = "./diario_chroma_db"
+DIARY_FILE = "/app/chats/diario/diario_personal_vida.txt" # El fichero consolidado del RAG
+PERSIST_DIR = "/app/chats/diario/diario_chroma_db"
 SEPARADOR = "\n---\n" # El delimitador atómico
 
 # --- 1. CONFIGURACIÓN DEL LLM EXTRACTOR ---
