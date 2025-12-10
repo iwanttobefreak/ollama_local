@@ -15,3 +15,5 @@ else
   # Mantén el contenedor vivo con un shell interactivo (opcional)
   exec bash
 fi
+
+wait
