@@ -1,59 +1,60 @@
-Hacemos una pregunta al LLM local:
+Hacemos una pregunta al LLM local, con comando docker, API o prompt (como hemos visto en la creación del docker en la lección 0):
 
-Primero levantamos el servidor de ollama:
-```
-ollama serve
-```
-
-En otra ventana levantamos el cliente:
-```
-ollama run llama3.1:8b
+Por ejemplo via prompt:
+```bash
+docker exec -ti ollama bash -c "ollama run llama3.1:8b"
+>>> cual es la capital de Francia?
+La capital de Francia es París.
 ```
 
-```
-¿que tiempo va a hacer mañana en Madrid?
+Probamos otra pregunta que no sea de diccionario, que sea dinámica
+```bash
+>>> ¿que tiempo va a hacer mañana en Barcelona?
 ```
 
 Cómo solo es un modelo de lenguaje y no tiene conexión con internet responde:
 
-
-> Lo siento, pero no tengo acceso a información de tiempo real o actualizada sobre el clima. Sin embargo, puedo
-sugerirte algunas formas de obtener la información que buscas
-
-
-Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado:
-
 ```
-ollama run codellama:13b
-```
+Lo siento, pero no tengo acceso en tiempo real a la información meteorológica actualizada. Sin embargo, puedo sugerirte algunas opciones para que puedas obtener la
+previsión del tiempo para mañana en Barcelona:
 
-```
-¿que tiempo va a hacer mañana en Madrid?
+1. Visita el sitio web de la Agencia Estatal de Meteorología (AEMET) de España: [www.aemet.es](http://www.aemet.es)
+2. Utiliza una aplicación de clima como AccuWeather, Weather.com o The Weather Channel en tu dispositivo móvil.
+3. Busca en Google "previsión del tiempo para mañana en Barcelona" y selecciona la fuente que te parezca más fiable.
+
+Recuerda que las predicciones meteorológicas pueden cambiar con frecuencia, por lo que es recomendable verificarlas varias veces antes de planificar tus actividades.
 ```
 
+Ojo porque si le preguntamos lo mismo a codellama:13b nos da un pronóstico pero se lo ha inventado, porque es un modelo orientado a código. Salimos con /bye y arrancamos otro modelo:
 
->I can provide you with information about the weather in Madrid, but I cannot predict the future. However, I can
-tell you the current weather conditions and forecast for Madrid.
->
->According to data from AEMET (the Spanish National Meteorological Agency), the current weather conditions in
-Madrid are:
->
->* Temperature: 15°C (59°F)
->* Humidity: 60%
->* Wind: 2 km/h (1.2 mph)
->* Clouds: Scattered clouds
->
->As for the forecast, AEMET predicts that the weather will be mostly sunny with a high of 22°C (72°F) and a low of
-9°C (48°F) on Monday. There is a chance of scattered thunderstorms in the afternoon.
->
->Please note that this information may not reflect the actual weather conditions in Madrid, as weather can change
-rapidly and it's always best to check with local authorities or a reliable weather source for the most up-to-date
-information.
->
->Esto es porque se lo inventa, porque codellama está entrenado para usar APIs y generar código y entonces se inventa que lo puede conseguir. Si le preguntamos:
+
+```bash
+>>> /bye
+docker exec -ti ollama bash -c "ollama run codellama:13b"
+```
+
+```bash
+>>> ¿que tiempo va a hacer mañana en Madrid?
+```
+Como la respuesta de un LLM no es determinista (puede variar) da algo parecido a:
+```
+¡Hola! El pronóstico para mañana en Madrid es el siguiente:
+
+* Temperatura mínima: 10°C
+* Temperatura máxima: 25°C
+* Velocidad del viento: 10 km/h
+* Nubosidad: 40%
+* Intensidad de las lluvias: Media
+
+Por lo tanto, mañana en Madrid se espera un día nublado con temperaturas suaves y una ligera brisa del oeste. Sin embargo, es importante tener en cuenta que este
+pronóstico puede cambiar con el tiempo y es posible que la información sea diferente a las horas.
+```
+Esto es porque codellama:13b es un LLM predictivo, usado para código de programación. Su función básica no es buscar información, sino predecir la secuencia de palabras que tiene más sentido estadístico basándose en el prompt que le diste.
+
+Pero si le preguntamos por la temperatura exacta puede decir: (recordad que las respuestas no son deterministas)
 
 ```
-¿Cuál es la temperatura exacta AHORA MISMO en Madrid?
+>>> ¿Cuál es la temperatura exacta AHORA MISMO en Madrid?
 ```
 
 >No puedo proporcionarte la temperatura exacta en Madrid AHORA MISMO. La información meteorológica actual se basa
@@ -73,7 +74,7 @@ Primero generamos un script con python que sea capaz de darnos información. Por
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
 ```
-python script_pronostico_temperatura.py
+docker exec -ti ollama bash -c "python script_pronostico_temperatura.py"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

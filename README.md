@@ -12,26 +12,20 @@ Ejecución de modelos de APIs y agentes de IA 100% en local sin usar tokens ni s
 
 ## Creación imágen de docker de Ollama
 Descarga el repositorio. Dentro del repositorio hay un Dockerfile para usar ollama (modelo de LLM). Crearemos una imagen que se llame **ollama**
-```bash
-git clone https://github.com/iwanttobefreak/ollama_local.git
-cd ollama_local
-docker build -t ollama .
-```
-Nos crea una imagen con ollama y algunas bibliotecas necesarias que ocupa unos 4.71Gb
-```
-REPOSITORY                                   TAG              IMAGE ID      CREATED        SIZE
-localhost/ollama                             latest           5869e52488df  2 minutes ago  4.71 GB
-```
+
 ### Parámetros Docker
-- Puertos
-  - $PUERTO_OLLAMA: Api ollama
-  - $PUERTO_FLASK: Api Flask
-- Volumenes
-  - $DIR_DATOS: volúmen fuera del repositorio de GIT para mapear datos locales como BBDD, txt con contextos, etc...
-  - $DIR_LLM: volúmen donde guarda los LLMs. Ocupan mucho, mejor guardar fuera del contenedor también para poder reaprovechar
-  - $DIR_SCRIPTS: volúmen donde se guardan los scripts. Recomendable mapear con el repositorio de GIT
-- Otros
-  - $MEMORIA: memoria del docker. Si no tienes GPU, recomendado poner bastante
+
+- **Puertos:**
+  - `PUERTO_OLLAMA`: Puerto de la API Ollama (ejemplo: 11434)
+  - `PUERTO_FLASK`: Puerto de la API Flask (ejemplo: 5000)
+
+- **Volúmenes:**
+  - `DIR_DATOS`: Volumen externo para datos locales (BBDD, txt de contextos, etc.)
+  - `DIR_LLM`: Volumen para los modelos LLM (recomendado fuera del contenedor para reutilizar y ahorrar espacio)
+  - `DIR_SCRIPTS`: Volumen para los scripts (recomendado mapear con el repositorio de GIT)
+
+- **Otros:**
+  - `MEMORIA`: Memoria asignada al contenedor Docker (si no tienes GPU, pon suficiente RAM)
 
 Ejemplo:
 ```bash
@@ -109,6 +103,13 @@ llama3.2:1b                baf6a787fdff    1.3 GB    37 hours ago
 codellama:13b              9f438cb9cd58    7.4 GB    5 days ago
 llama3.1:8b                46e0c10c039e    4.9 GB    6 weeks ago
 ```
+
+También podemos abrir un prompt tipo ChatGPT e interactura con él:
+```bash
+docker exec -ti ollama bash -c "ollama run llama3.1:8b"
+>>> Send a message (/? for help)
+```
+
 
 Probamos el LLM:
 ```bash
