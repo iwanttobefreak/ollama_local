@@ -47,11 +47,34 @@ MEMORIA=16g
 docker run --rm -d --name ollama \
   -p $PUERTO_OLLAMA:11434 \
   -p $PUERTO_FLASK:5000 \
-  --$MEMORIA="16g" \
+  --memory="$MEMORIA" \
   -v $DIR_SCRIPTS:/app/scrics \
   -v $DIR_LLM:/root/.ollama \
   -v $DIR_DATOS:/app/datos \
   ollama
+```
+
+Ahora si entramos en el docker, vemos que no tiene descargado ningun LLM
+```bash
+docker exec -ti ollama bash
+```
+Mostrar LLMs cargados, no tenemos ninguno:
+```bash
+ollama list
+NAME    ID    SIZE    MODIFIED
+```
+Descargamos el modelo llama3.2:1b
+```bash
+ollama push llama3.2:1b
+```
+
+Podemos descargar también otros modelos depende de lo que queramos usar:
+```bash
+NAME                       ID              SIZE      MODIFIED
+nomic-embed-text:latest    0a109f422b47    274 MB    34 hours ago
+llama3.2:1b                baf6a787fdff    1.3 GB    37 hours ago
+codellama:13b              9f438cb9cd58    7.4 GB    5 days ago
+llama3.1:8b                46e0c10c039e    4.9 GB    6 weeks ago
 ```
 
 ## Lección 1

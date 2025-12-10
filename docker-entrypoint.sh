@@ -42,7 +42,7 @@ echo "========================================================"
 
 # Iniciar Ollama serve en background
 echo "🌐 Iniciando Ollama serve..."
-ollama serve &
+ollama serve --host 0.0.0.0 &
 
 # Esperar a que Ollama esté listo
 echo "⏳ Esperando que Ollama esté listo..."
