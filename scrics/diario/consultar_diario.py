@@ -7,7 +7,7 @@ from langchain_ollama import OllamaEmbeddings
 # --- 1. CONFIGURACIÓN ---
 OLLAMA_EMBED_MODEL = "nomic-embed-text"
 OLLAMA_LLM_MODEL = "llama3.1:8b" # Usamos el modelo que indicaste
-PERSIST_DIR = "./diario_chroma_db"
+PERSIST_DIR = "/app/chats/diario/diario_chroma_db"
 
 # --- 2. CARGAR LA BASE DE DATOS (BD) PERSISTIDA ---
 print(f"Cargando el modelo de embeddings: {OLLAMA_EMBED_MODEL}...")

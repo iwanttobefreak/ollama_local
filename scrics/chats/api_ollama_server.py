@@ -4,74 +4,12 @@ import os
 import shutil
 from datetime import datetime
 import requests
-
-# ...existing code...
-
-app = Flask(__name__)
-
-# --- Endpoint para añadir eventos ---
-@app.route("/anadir_evento", methods=["POST"])
-def anadir_evento():
-    logger.info("🔄 Endpoint /anadir_evento llamado")
-    try:
-        data = request.get_json()
-        logger.debug(f"📥 Datos recibidos: {data}")
-
-        required = ["persona", "tipo", "nombre", "lugar", "fecha"]
-        if not data or not all(k in data for k in required):
-            logger.warning("❌ Faltan parámetros obligatorios: persona, tipo, nombre, lugar, fecha")
-            return Response(
-                json.dumps({"error": "Faltan parámetros obligatorios: persona, tipo, nombre, lugar, fecha"}, ensure_ascii=False),
-                mimetype="application/json",
-                status=400
-            )
-
-        persona = data["persona"]
-        evento = {
-            "tipo": data["tipo"],
-            "nombre": data["nombre"],
-            "lugar": data["lugar"],
-            "fecha": data["fecha"]
-        }
-        if "notas" in data:
-            evento["notas"] = data["notas"]
-
-        archivo = os.path.join(CONTEXTOS_DIR, f"{persona}.json")
-        if os.path.exists(archivo):
-            with open(archivo, "r", encoding="utf-8") as f:
-                datos = json.load(f)
-        else:
-            datos = {"nombre": persona, "eventos": []}
-
-        if "eventos" not in datos or not isinstance(datos["eventos"], list):
-            datos["eventos"] = []
-        datos["eventos"].append(evento)
-
-        with open(archivo, "w", encoding="utf-8") as f:
-            json.dump(datos, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"✅ Evento añadido para {persona}")
-        return Response(
-            json.dumps({"mensaje": f"Evento añadido para {persona}"}, ensure_ascii=False),
-            mimetype="application/json"
-        )
-
-    except Exception as e:
-        logger.error(f"❌ Error inesperado en endpoint /anadir_evento: {e}")
-        logger.error(f"   Traceback: {traceback.format_exc()}")
-        return Response(
-            json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False),
-            mimetype="application/json",
-            status=500
-        )
-from flask import Flask, request, Response
-import json
-import os
-import shutil
-from datetime import datetime
-import requests
 import logging
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
+from langchain_text_splitters import CharacterTextSplitter
 import traceback
+from datetime import timedelta
 
 # Configurar logging detallado
 logging.basicConfig(
@@ -91,6 +29,8 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "llama3.2:1b"
 HISTORIAL_DIR = "/app/chats/historial"
 CONTEXTOS_DIR = "/app/chats/contextos"
+DIARIO_FILE = "/app/chats/diario/diario_personal_vida.txt"
+DIARIO_CHROMA_DB = "/app/chats/diario/diario_chroma_db"
 
 # -----------------------------
 # Funciones de contexto
@@ -495,23 +435,26 @@ def anadir_evento_colloquial():
         prompt = (
             "Extrae los siguientes campos de evento de este texto y devuélvelos en JSON válido con las claves: persona, tipo, nombre, lugar, fecha, notas.\n"
             "- Si aparece 'con [nombre]' en el texto, pon ese nombre en el campo 'persona'.\n"
-            "- El campo 'tipo' debe ser la actividad principal (por ejemplo: cena, comida, concierto).\n"
-            "- El campo 'nombre' debe ser el nombre del restaurante, artista, lugar, etc.\n"
-            "- El campo 'lugar' es la ciudad o localización.\n"
-            "- El campo 'fecha' es la fecha del evento.\n"
-            "- El campo 'notas' es cualquier detalle adicional.\n"
-            "No inventes datos, pero usa la información que encuentres en el texto. Si algún campo no está, déjalo vacío.\n"
+            "- El campo 'tipo' debe ser la actividad principal (por ejemplo: paseo, cena, comida, concierto, excursión, viaje, etc).\n"
+            "- El campo 'nombre' debe ser el nombre del restaurante, artista, lugar, parque, etc.\n"
+            "- El campo 'lugar' es la ciudad, barrio o localización relevante.\n"
+            "- El campo 'fecha' debe estar en formato YYYY/MM/DD. Si no se puede deducir la fecha exacta, déjalo vacío.\n"
+            "- El campo 'notas' es cualquier detalle adicional, como comentarios sobre el clima, sensaciones, etc.\n"
+            "No inventes datos, pero usa toda la información que encuentres en el texto. Si algún campo no está explícito pero se puede deducir, complétalo. Si no hay información suficiente, déjalo vacío.\n"
+            "Nunca devuelvas todos los campos vacíos si hay información relevante en el texto.\n"
             "\nEjemplo 1:\n"
-            "TEXTO: he ido con Laia a cenar al restaurante Coque de Madrid el 8 de diciembre de 2025 y me gustó mucho la comida\n"
+            "TEXTO: he ido con Laia a cenar al restaurante Coque de Madrid el 2025/12/08 y me gustó mucho la comida\n"
             "JSON:\n"
-            "{\n  \"persona\": \"Laia\",\n  \"tipo\": \"cena\",\n  \"nombre\": \"Coque\",\n  \"lugar\": \"Madrid\",\n  \"fecha\": \"8 de diciembre de 2025\",\n  \"notas\": \"Me gustó mucho la comida\"\n}\n"
+            "{\n  \"persona\": \"Laia\",\n  \"tipo\": \"cena\",\n  \"nombre\": \"Coque\",\n  \"lugar\": \"Madrid\",\n  \"fecha\": \"2025/12/08\",\n  \"notas\": \"Me gustó mucho la comida\"\n}\n"
             "\nEjemplo 2:\n"
-            "TEXTO: fuimos con Jandro al concierto de Vetusta Morla en WiZink Center el 5 de mayo de 2024, fue espectacular\n"
+            "TEXTO: El domingo fui con Laia a dar un paseo por la casa de Campo de Madrid. Hacía muy buen día\n"
             "JSON:\n"
-            "{\n  \"persona\": \"Jandro\",\n  \"tipo\": \"concierto\",\n  \"nombre\": \"Vetusta Morla\",\n  \"lugar\": \"WiZink Center\",\n  \"fecha\": \"5 de mayo de 2024\",\n  \"notas\": \"fue espectacular\"\n}\n"
+            "{\n  \"persona\": \"Laia\",\n  \"tipo\": \"paseo\",\n  \"nombre\": \"\",\n  \"lugar\": \"Casa de Campo, Madrid\",\n  \"fecha\": \"\",\n  \"notas\": \"Hacía muy buen día\"\n}\n"
             f"\nTEXTO: {texto}\nJSON:"
         )
+        logger.debug(f"🟦 PROMPT enviado al LLM:\n{prompt}")
         messages = [{"role": "user", "content": prompt}]
+        logger.debug(f"🟦 MESSAGES enviados a Ollama: {messages}")
         response = requests.post(
             OLLAMA_URL,
             json={
@@ -522,6 +465,7 @@ def anadir_evento_colloquial():
             timeout=60
         )
         logger.debug(f"📥 Respuesta de Ollama: status={response.status_code}")
+        logger.debug(f"📥 Respuesta RAW de Ollama: {response.text}")
         if response.status_code != 200:
             logger.error(f"❌ Error HTTP de Ollama: {response.status_code} - {response.text}")
             return Response(
@@ -530,6 +474,7 @@ def anadir_evento_colloquial():
                 status=500
             )
         data_ollama = response.json()
+        logger.debug(f"🟦 JSON recibido de Ollama: {data_ollama}")
         if "message" not in data_ollama or "content" not in data_ollama["message"]:
             logger.error(f"❌ Respuesta de Ollama malformada: {data_ollama}")
             return Response(
@@ -544,6 +489,7 @@ def anadir_evento_colloquial():
         logger.debug(f"📝 Respuesta LLM: {respuesta_llm}")
         # Buscar todos los bloques JSON válidos
         matches = re.findall(r'\{[\s\S]*?\}', respuesta_llm)
+        logger.debug(f"🟦 BLOQUES JSON extraídos: {matches}")
         if not matches:
             logger.error("❌ No se encontró JSON en la respuesta de Ollama")
             return Response(
@@ -804,6 +750,125 @@ def resumir():
             status=500
         )
 
+# --- Endpoint para procesar frase y añadir al RAG ---
+@app.route("/procesar_rag_frase", methods=["POST"])
+def procesar_rag_frase():
+    logger.info("🔄 Endpoint /procesar_rag_frase llamado")
+    try:
+        data = request.get_json()
+        frase = data.get("frase")
+        if not frase:
+            return Response(json.dumps({"error": "Falta parámetro 'frase'"}, ensure_ascii=False), mimetype="application/json", status=400)
+
+        # Prompt de extracción mejorado para fechas relativas
+        # Calcular fechas para los ejemplos y definir el prompt antes de cualquier uso
+        hoy = datetime.now()
+        ayer = hoy - timedelta(days=1)
+        dias_hasta_domingo = (hoy.weekday() + 1) % 7
+        ultimo_domingo = hoy - timedelta(days=dias_hasta_domingo)
+        extraction_prompt = f"""
+Eres un asistente experto en estructuración de diarios personales.
+Tu tarea es analizar cada entrada de texto y extraer los siguientes campos:
+- FECHA: Extrae la fecha del evento y tradúcela a formato DD/MM/YYYY (por ejemplo, si el texto dice 'el 1 de diciembre de 2025', responde '01/12/2025').
+  Si la fecha es relativa (por ejemplo: 'ayer', 'el domingo', 'la semana pasada', 'hoy'), debes calcular la fecha exacta usando como fecha actual '{hoy.strftime('%d/%m/%Y')}'.
+  Si no hay fecha explícita o no se puede deducir, déjala vacía.
+- TIPO: Una palabra o frase corta que resuma el evento (ejemplo: Cena, Viaje, Concierto, Trabajo, Médico, etc.)
+- LUGAR: Ciudad, local, país, o sitio relevante; si no hay, déjalo vacío.
+
+Devuelve SOLO un objeto JSON válido con las claves 'FECHA', 'TIPO' y 'LUGAR'.
+
+Ejemplo 1:
+Entrada: "Ayer he ido a cenar con Ana al restaurante Coque de Madrid. La comida espectacular."
+JSON:
+{{"FECHA": "{ayer.strftime('%d/%m/%Y')}", "TIPO": "Cena", "LUGAR": "Madrid"}}
+
+Ejemplo 2:
+Entrada: "He ido a un concierto de Metallica el día 1 de diciembre en la sala la Riviera de Madrid. Tocaron canciones antiguas."
+JSON:
+{{"FECHA": "01/12/2025", "TIPO": "Concierto", "LUGAR": "La Riviera, Madrid"}}
+
+Ejemplo 3:
+Entrada: "El domingo fui a correr al Retiro."
+JSON:
+{{"FECHA": "{ultimo_domingo.strftime('%d/%m/%Y')}", "TIPO": "Correr", "LUGAR": "Retiro"}}
+
+NO respondas nada más. Devuelve SOLO el objeto JSON solicitado, sin explicaciones ni contexto adicional.
+"""
+        logger.debug(f"🟦 PROMPT enviado al LLM:\n{extraction_prompt}")
+        messages = [
+            {"role": "system", "content": extraction_prompt},
+            {"role": "user", "content": frase}
+        ]
+        logger.debug(f"🟦 MESSAGES enviados a Ollama: {messages}")
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "messages": messages,
+                "stream": False
+            },
+            timeout=60
+        )
+        logger.debug(f"📥 Respuesta de Ollama: status={response.status_code}")
+        logger.debug(f"📥 Respuesta RAW de Ollama: {response.text}")
+        if response.status_code != 200:
+            logger.error(f"❌ Error HTTP de Ollama: {response.status_code} - {response.text}")
+            return Response(json.dumps({"error": "No se pudo obtener respuesta de Ollama"}, ensure_ascii=False), mimetype="application/json", status=500)
+        data_ollama = response.json()
+        logger.debug(f"🟦 JSON recibido de Ollama: {data_ollama}")
+        respuesta_llm = data_ollama.get("message", {}).get("content", "")
+        logger.debug(f"📝 Respuesta LLM: {respuesta_llm}")
+        import re
+        import json as pyjson
+        matches = re.findall(r'\{[\s\S]*?\}', respuesta_llm)
+        logger.debug(f"🟦 BLOQUES JSON extraídos: {matches}")
+        metadata = None
+        for bloque in matches:
+            try:
+                metadata = pyjson.loads(bloque)
+                logger.debug(f"🟦 METADATA extraída: {metadata}")
+                break
+            except Exception as ex_json:
+                logger.warning(f"[DEBUG] Fallo al parsear bloque JSON: {bloque}\nError: {ex_json}")
+                continue
+        if not metadata:
+            logger.error(f"[DEBUG] No se pudo extraer JSON válido de la respuesta: {respuesta_llm}")
+            return Response(json.dumps({"error": "No se pudo extraer JSON válido"}, ensure_ascii=False), mimetype="application/json", status=500)
+        # Guardar en el RAG (diario_personal_vida.txt)
+        SEPARADOR = "\n---\n"
+        fecha = metadata.get('FECHA', 'FECHA_DESCONOCIDA')
+        tipo = metadata.get('TIPO', 'EVENTO_DESCONOCIDO')
+        lugar = metadata.get('LUGAR', 'LUGAR_DESCONOCIDO')
+        etiquetas = f"[FECHA: {fecha}] [TIPO: {tipo}] [LUGAR: {lugar}]"
+        entrada_rag = f"{etiquetas}\n{frase}\n{SEPARADOR}"
+        # Escribir en diario_personal_vida.txt
+        with open(DIARIO_FILE, 'a', encoding='utf-8') as f:
+            f.write(entrada_rag)
+        # Añadir la entrada al vector store Chroma
+        try:
+            embeddings = OllamaEmbeddings(model="nomic-embed-text")
+            text_splitter = CharacterTextSplitter(separator=SEPARADOR, chunk_size=4000, chunk_overlap=0, length_function=len)
+            # Dividir la entrada en fragmentos (aunque normalmente será solo uno)
+            texts = text_splitter.create_documents([entrada_rag])
+            vectorstore = Chroma(
+                embedding_function=embeddings,
+                persist_directory=DIARIO_CHROMA_DB
+            )
+            vectorstore.add_documents(texts)
+            if hasattr(vectorstore, "persist"):
+                vectorstore.persist()
+            logger.info(f"✅ Entrada añadida al vector store ChromaDB: {etiquetas}")
+        except Exception as e:
+            logger.error(f"❌ Error añadiendo entrada a ChromaDB: {e}")
+            logger.error(f"   Traceback: {traceback.format_exc()}")
+            return Response(json.dumps({"error": "Error añadiendo entrada a ChromaDB"}, ensure_ascii=False), mimetype="application/json", status=500)
+        logger.info(f"✅ Entrada añadida al RAG y ChromaDB: {etiquetas}")
+        return Response(json.dumps({"mensaje": "Entrada añadida al RAG y ChromaDB", "etiquetas": etiquetas}), mimetype="application/json")
+    except Exception as e:
+        logger.error(f"❌ Error inesperado en endpoint /procesar_rag_frase: {e}")
+        logger.error(f"   Traceback: {traceback.format_exc()}")
+        return Response(json.dumps({"error": "Error interno del servidor"}, ensure_ascii=False), mimetype="application/json", status=500)
+
 if __name__ == "__main__":
     logger.info("🚀 Iniciando API Ollama Server...")
     logger.info(f"📡 Ollama URL: {OLLAMA_URL}")
@@ -828,6 +893,9 @@ if __name__ == "__main__":
                 exit(1)
 
     logger.info("🌐 Iniciando servidor Flask en puerto 5000...")
+    logger.info("Rutas registradas en Flask justo antes de arrancar el servidor:")
+    for rule in app.url_map.iter_rules():
+        logger.info(f"  {rule.endpoint}: {rule.methods} -> {rule}")
     try:
         app.run(host="0.0.0.0", port=5000, debug=False)
     except Exception as e:
@@ -835,4 +903,4 @@ if __name__ == "__main__":
         logger.error(f"   Traceback: {traceback.format_exc()}")
         exit(1)
 
- 
+
