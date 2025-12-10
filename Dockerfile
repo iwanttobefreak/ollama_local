@@ -34,11 +34,10 @@ RUN chmod +x /docker-entrypoint.sh
 # Agregar activación del entorno virtual al inicio del contenedor
 RUN echo 'source /ollama-agente/bin/activate' >> /root/.bashrc
 
-RUN cat << 'EOF' > /usr/local/bin/python
-#!/bin/bash
-source /ollama-agente/bin/activate
-exec python3 "$@"
-EOF
+RUN echo '#!/bin/bash' > /usr/local/bin/python \
+    && echo 'source /ollama-agente/bin/activate' >> /usr/local/bin/python \
+    && echo 'exec python3 "$@"' >> /usr/local/bin/python
+
 RUN chmod +x /usr/local/bin/python
 
 # Exponer puerto de Ollama (por defecto 11434)
