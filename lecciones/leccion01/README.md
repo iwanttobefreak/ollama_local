@@ -255,98 +255,116 @@ KEYWORDS = [
 
 Ejemplo de tool simple para obtener temperatura:
 ```
-python tool__temperatura_minima.py
+docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura.py"
 ```
 
->Escribe /bye para salir, /help para ayuda
->Busca el tiempo de CUALQUIER ciudad de España (sin límites)
+```
+=== TOOL CLIMA POC ===
 
-Le introducimos la pregunta:
->>> Que temperatura va a hacer mañana en Madrid
+Introduce una pregunta sobre el clima (o escribe 'salir' para terminar):
+>>>
+```
+
+Le introducimos la misma pregunta que antes que no supo responder:
+```
+>>>  ¿que tiempo va a hacer mañana en Barcelona?
+```
 
 Respuesta:
 
 ```
-[DEBUG] Ollama llamó a la tool 1 vez/veces!
-[DEBUG] Función: obtener_pronostico_temperatura
-[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
-[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
-[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
-[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
-[FUNC DEBUG] Llamando a Open-Meteo API...
-[FUNC DEBUG] Status code: 200
-[FUNC DEBUG] Éxito! Devolviendo pronóstico
-[DEBUG] Resultado: Pronóstico para Madrid:
-HOY (Viernes): 5-11°C, Lluvia ligera, lluvia 25%, viento 11 km/h...
-{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"2"}}
+[DEBUG] Pregunta recibida: ¿que tiempo va a hacer mañana en Barcelona?
+[DEBUG] Prompt enviado al LLM:
+  - role: user, content: ¿que tiempo va a hacer mañana en Barcelona?
+[DEBUG] Tool definition disponible: consultar_clima
+[DEBUG] Llamando al LLM (Ollama) con tools...
+[DEBUG] Respuesta completa del LLM:
+  - role: assistant
+  - content:
+  - tool_calls: [ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'}))]
+[DEBUG] El LLM ha decidido llamar a la tool porque la pregunta coincide con la descripción y parámetros definidos.
+[DEBUG] tool_call: function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'})
+[DEBUG] Argumentos extraídos: ciudad=Barcelona, dias=1
+[DEBUG] Ejecutando script externo para: Barcelona (1 dias)
+[DEBUG] Resultado del script: ======================================================================
+PRONOSTICO DE TEMPERATURA - C...
+[DEBUG] Enviando resultado de la tool al LLM para respuesta final...
+[DEBUG] Respuesta final del LLM:
+  - role: assistant
+  - content: El pronóstico del tiempo para Barcelona mañana es de niebla con una temperatura de 6,7°C a 19,6°C y una probabilidad de lluvia del 0%. El viento será suave con una velocidad de 8 km/h.
+
+Respuesta: El pronóstico del tiempo para Barcelona mañana es de niebla con una temperatura de 6,7°C a 19,6°C y una probabilidad de lluvia del 0%. El viento será suave con una velocidad de 8 km/h.
 ```
 
-Otro ejemplo de Tool es tool_temperatura_avanzada.py que no usa llamadas a scripts y tiene todo el código incluido. Busca la ciudad en openstreetMap y luego consulta en open-meteo.
-
+Vemos en la respuesta del LLM que ha decidido llamar a la tool con unos parámetros:
 ```
-python tool_temperatura_avanzada.py
-Escribe /bye para salir, /help para ayuda
-Busca el tiempo de CUALQUIER ciudad de España (sin límites)
->>> Que temperatura va a hacer mañana en Madrid
-[DEBUG] Ollama llamó a la tool 1 vez/veces!
-[DEBUG] Función: obtener_pronostico_temperatura
-[DEBUG] Argumentos: {'ciudad': 'Madrid', 'dias': '1'}
-[FUNC DEBUG] Buscando temperatura para: Madrid, 1 días
-[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
-[FUNC DEBUG] Resultado: lat=40.416782, lon=-3.703507, nombre=Madrid
-[FUNC DEBUG] Llamando a Open-Meteo API...
-[FUNC DEBUG] Status code: 200
-[FUNC DEBUG] Éxito! Devolviendo pronóstico
-[DEBUG] Resultado: Pronóstico para Madrid:
-HOY (Viernes): 5-12°C, Nublado, lluvia 25%, viento 12 km/h...
-{"name": "obtener_pronostico_temperatura", "parameters": {"ciudad":"Madrid","dias":"1"}}
+  - tool_calls: [ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'}))]
+```
+Si hacemos una llamada que no necesita la tool:
+```bash
+Introduce una pregunta sobre el clima (o escribe 'salir' para terminar):
+>>> ¿Cual es la capital de Francia?
+```
+Respuesta:
+```
+[DEBUG] Pregunta recibida: ¿Cual es la capital de Francia?
+[DEBUG] Prompt enviado al LLM:
+  - role: user, content: ¿Cual es la capital de Francia?
+[DEBUG] Tool definition disponible: consultar_clima
+[DEBUG] Llamando al LLM (Ollama) con tools...
+[DEBUG] Respuesta completa del LLM:
+  - role: assistant
+  - content: No se puede responder a esta pregunta con las funciones proporcionadas, ya que no hay ninguna función relacionada con geografia o demografia. La función "consultar_clima" solo se utiliza para consultar el clima en una ciudad española. Si deseas obtener la información sobre la capital de Francia, necesitaría tener acceso a otras fuentes de información.
+
+Sin embargo, si quieres una respuesta aproximada, podrías utilizar otra fuente de información o hacer una pregunta relacionada con geografia o demografia que esté dentro del alcance de las funciones proporcionadas.
+  - tool_calls: None
+[DEBUG] El LLM NO ha solicitado llamar a la tool. Esto ocurre porque la pregunta no coincide con la descripción de la tool o los parámetros requeridos.
+[DEBUG] Respuesta directa del LLM: No se puede responder a esta pregunta con las funciones proporcionadas, ya que no hay ninguna función relacionada con geografia o demografia. La función "consultar_clima" solo se utiliza para consultar el clima en una ciudad española. Si deseas obtener la información sobre la capital de Francia, necesitaría tener acceso a otras fuentes de información.
+
+Sin embargo, si quieres una respuesta aproximada, podrías utilizar otra fuente de información o hacer una pregunta relacionada con geografia o demografia que esté dentro del alcance de las funciones proporcionadas.
+
+Respuesta: No se puede responder a esta pregunta con las funciones proporcionadas, ya que no hay ninguna función relacionada con geografia o demografia. La función "consultar_clima" solo se utiliza para consultar el clima en una ciudad española. Si deseas obtener la información sobre la capital de Francia, necesitaría tener acceso a otras fuentes de información.
+
+Sin embargo, si quieres una respuesta aproximada, podrías utilizar otra fuente de información o hacer una pregunta relacionada con geografia o demografia que esté dentro del alcance de las funciones proporcionadas.
 ```
 
-Para poder hacer varias llamadas, tenemos que incluir instrucciones.
-
-A la hora de definir el prompt tenemos definido en tool__temperatura_avanzada.py:
+Dependiendo de la definición de la tool, elige llamar o no a la tool, Se puede afinar y entrenar por si se hacen las preguntas de diferente tipo. Por ejemplo con esta pregunta no lanza la tool:
 ```
-    messages = [
-        {
-            'role': 'system',
-            'content': '''Eres un asistente útil con acceso a herramientas meteorológicas para España.
+¿va a llover en Barcelona el sábado?
+```
+Pero con esta otra si:
+```
+¿va a haber lluvia en Barcelona el sábado?
+```
+En la definición de las palabras claves en **tool_temperatura.py** si tenemos definido lluvía pero no llover:
+```
+    # Palabras que Si indican clima
+    palabras_clima = ['temperatura', 'clima', 'tiempo', 'lluvia', 'calor', 'frio', 'humedad', 'viento', 'nublado', 'sol', 'meteorologico', 'pronostico', 'manana', 'semana']
+```
+Podríamos coger pregunts que creemos que si son de clima y pedir a una IA que nos modifique la tool para que las incluya, por ejemplo estas preguntas, que saque palabras clave, ejemplos.... o lo podemos hacer a mano:
+```
+¿Va a llover mañana en Barcelona?
+¿Habrá tormenta en Madrid esta semana?
+¿Cuál es la probabilidad de nieve en Huesca?
+¿El cielo estará despejado en Valencia mañana?
+¿Qué velocidad tendrá el viento en Bilbao?
+¿Cómo estará el clima en Sevilla el domingo?
+¿Va a hacer sol en Málaga el sábado?
+¿Cuál será la humedad en Zaragoza mañana?
+```
 
-IMPORTANTE:
-- Cuando uses herramientas, SIEMPRE presenta los resultados obtenidos de forma clara
-- NO digas "no tengo acceso a información" si ya obtuviste datos de herramientas
-- Si te preguntan por VARIAS ciudades, usa la herramienta VARIAS VECES (una por ciudad)
-- Para comparaciones (ej: "¿dónde hará más calor, en X o Y?"), llama a la herramienta para CADA ciudad y luego compara los resultados'''
-        }
+Si le pedimos comparativas también las hace:
+```
+>>> Dónde va a hacer mas calor mañana, ¿En Madrid o en Bsrcelona?
+```
+
+Vemos que en tool_calls vienen 2 llamadas:
+```
+  - tool_calls: [
+    ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Madrid', 'dias': '1'})), 
+    ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'}))
     ]
 ```
 
-Ahora le podemos preguntar comparando dos ciudades
+Podemos hacer la tool sin scripts externos, que todo venga incluido en el mismo fichero:
 
-```
-python tool__temperatura_avanzada.py
-Escribe /bye para salir, /help para ayuda
-Busca el tiempo de CUALQUIER ciudad de España (sin límites)
->>> ¿Dónde va a hacer mas calor mañana, en Barcelona o en Huesca?
-[DEBUG] Ollama llamó a la tool 2 vez/veces!
-[DEBUG] Función: obtener_pronostico_temperatura
-[DEBUG] Argumentos: {'ciudad': 'Barcelona', 'dias': '1'}
-[FUNC DEBUG] Buscando temperatura para: Barcelona, 1 días
-[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
-[FUNC DEBUG] Resultado: lat=41.3825802, lon=2.177073, nombre=Barcelona
-[FUNC DEBUG] Llamando a Open-Meteo API...
-[FUNC DEBUG] Status code: 200
-[FUNC DEBUG] Éxito! Devolviendo pronóstico
-[DEBUG] Resultado: Pronóstico para Barcelona:
-HOY (Viernes): 9-14°C, Nublado, lluvia 0%, viento 10 km/h...
-[DEBUG] Función: obtener_pronostico_temperatura
-[DEBUG] Argumentos: {'ciudad': 'Huesca', 'dias': '1'}
-[FUNC DEBUG] Buscando temperatura para: Huesca, 1 días
-[FUNC DEBUG] Buscando ciudad en OpenStreetMap...
-[FUNC DEBUG] Resultado: lat=42.1360615, lon=-0.0298027, nombre=Huesca
-[FUNC DEBUG] Llamando a Open-Meteo API...
-[FUNC DEBUG] Status code: 200
-[FUNC DEBUG] Éxito! Devolviendo pronóstico
-[DEBUG] Resultado: Pronóstico para Huesca:
-HOY (Viernes): 3-11°C, Nublado, lluvia 45%, viento 28 km/h...
-Basándome en los pronósticos obtenidos, mañana hará más calor en Barcelona que en Huesca. La temperatura máxima prevista para Barcelona es de 14°C, mientras que para Huesca es de 11°C.
-```
