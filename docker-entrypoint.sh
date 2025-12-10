@@ -75,9 +75,9 @@ fi
 
 # Iniciar la API de Flask en background
 echo "🌐 Iniciando API Ollama Server..."
-if [ -f "/app/scrics/chats/api_ollama_server.py" ]; then
-    echo "📁 Cambiando a directorio: /app/scrics/chats"
-    cd /app/scrics/chats
+if [ -f "/app/scrics/api/api_ollama_server.py" ]; then
+    echo "📁 Cambiando a directorio: /app/scrics/api"
+    cd /app/scrics/api
     echo "📄 Archivo encontrado: $(ls -la api_ollama_server.py)"
     echo "🐍 Ejecutando: python3 api_ollama_server.py"
     echo "🔧 Entorno virtual: $VIRTUAL_ENV"
@@ -88,8 +88,8 @@ if [ -f "/app/scrics/chats/api_ollama_server.py" ]; then
     API_PID=$!
     echo "✅ API Ollama Server iniciado (PID: $API_PID) en puerto 5000"
 else
-    echo "⚠️  Archivo api_ollama_server.py no encontrado en /app/scrics/chats/"
-    ls -la /app/scrics/chats/ 2>/dev/null || echo "Directorio no existe"
+    echo "⚠️  Archivo api_ollama_server.py no encontrado en /app/scrics/api/"
+    ls -la /app/scrics/api/ 2>/dev/null || echo "Directorio no existe"
 fi
 
 echo "========================================================"

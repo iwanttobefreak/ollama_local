@@ -22,7 +22,37 @@ Nos crea una imagen con ollama y algunas bibliotecas necesarias que ocupa unos 4
 REPOSITORY                                   TAG              IMAGE ID      CREATED        SIZE
 localhost/ollama                             latest           5869e52488df  2 minutes ago  4.71 GB
 ```
+### Parámetros Docker
+- Puertos
+  - $PUERTO_OLLAMA: Api ollama
+  - $PUERTO_FLASK: Api Flask
+- Volumenes
+  - $DIR_DATOS: volúmen fuera del repositorio de GIT para mapear datos locales como BBDD, txt con contextos, etc...
+  - $DIR_LLM: volúmen donde guarda los LLMs. Ocupan mucho, mejor guardar fuera del contenedor también para poder reaprovechar
+  - $DIR_SCRIPTS: volúmen donde se guardan los scripts. Recomendable mapear con el repositorio de GIT
+- Otros
+  - $MEMORIA: memoria del docker. Si no tienes GPU, recomendado poner bastante
 
+Ejemplo:
+```bash
+PUERTO_OLLAMA=11434
+PUERTO_FLASK=5000
+DIR_LLM=/ollama/llm
+DIR_SCRIPTS=/ollama/scripts
+DIR_DATOS=/ollama/datos
+MEMORIA=16g
+```
+
+```bash
+docker run --rm -d --name ollama \
+  -p $PUERTO_OLLAMA:11434 \
+  -p $PUERTO_FLASK:5000 \
+  --$MEMORIA="16g" \
+  -v $DIR_SCRIPTS:/app/scrics \
+  -v $DIR_LLM:/root/.ollama \
+  -v $DIR_DATOS:/app/datos \
+  ollama
+```
 
 ## Lección 1
 Contenido de la lección...

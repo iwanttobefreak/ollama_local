@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/app/chats/api_ollama_server.log'),
+        logging.FileHandler('/app/datos/api_ollama_server.log'),
         logging.StreamHandler()
     ]
 )
@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 # -----------------------------
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "llama3.2:1b"
-HISTORIAL_DIR = "/app/chats/historial"
-CONTEXTOS_DIR = "/app/chats/contextos"
-DIARIO_FILE = "/app/chats/diario/diario_personal_vida.txt"
-DIARIO_CHROMA_DB = "/app/chats/diario/diario_chroma_db"
+HISTORIAL_DIR = "/app/datos/historial"
+CONTEXTOS_DIR = "/app/datos/contextos"
+DIARIO_FILE = "/app/datos/diario/diario_personal_vida.txt"
+DIARIO_CHROMA_DB = "/app/datos/diario/diario_chroma_db"
 
 # -----------------------------
 # Funciones de contexto
