@@ -1,4 +1,9 @@
 Hacemos una pregunta al LLM local, con comando docker, API o prompt (como hemos visto en la creación del docker en la lección 0):
+**NOTA: Pongo los comandos con "bash -c" para que se vea mas claro que se ejecuta, pero se puede ejecutar sin, da igual cualquiera de los dos, pero "ollama ollama" es un poco repetitivo XD:
+```bash
+docker exec -ti ollama bash -c "ollama run llama3.1:8b"
+docker exec -ti ollama ollama run llama3.1:8b
+```
 
 Por ejemplo via prompt:
 ```bash
@@ -74,7 +79,7 @@ Primero generamos un script con python que sea capaz de darnos información. Por
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
 ```
-docker exec -ti ollama bash -c "python script_pronostico_temperatura.py"
+docker exec -ti ollama bash -c "python /app/scrics/tools/pronostico_temperatura.py"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,7 +105,7 @@ docker exec -ti ollama bash -c "python script_pronostico_temperatura.py"
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
 ```
-python script_pronostico_temperatura.py Barcelona 2
+docker exec -ti ollama bash -c "python /app/scrics/tools/pronostico_temperatura.py Barcelona 2"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -140,6 +145,7 @@ python script_pronostico_temperatura.py Barcelona 2
 >Geocoding: OpenStreetMap Nominatim
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+Hasta aquí solo es python, no hay IA.
 
 Ahora vamos a integrar este script de python con una tool que sea capaz de ejecutar ollama.
 
@@ -185,7 +191,7 @@ Un ejemplo de prompt que te recoge la pregunta, separa los parámetros y ejecuta
 # Función que ejecuta el script
 def obtener_temp(ciudad):
     resultado = subprocess.run(
-        ['python3', 'script_pronostico_temperatura.py', ciudad],
+        ['python3', 'pronostico_temperatura.py', ciudad],
         capture_output=True,
         text=True
     )

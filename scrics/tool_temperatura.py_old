@@ -30,7 +30,7 @@ def es_pregunta_climatica(pregunta):
     return False
 
 def consultar_clima(ciudad, dias=3):
-    script_path = '/scrics/tools/pronostico_temperatura.py'
+    script_path = '/app//scrics/tools/pronostico_temperatura.py'
     
     try:
         result = subprocess.run(
