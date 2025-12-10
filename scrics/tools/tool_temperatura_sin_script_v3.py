@@ -1,4 +1,3 @@
-import pprint
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -29,28 +28,26 @@ def buscar_ciudad_nominatim(nombre_ciudad):
         headers = {
             'User-Agent': 'PronosticoTemperatura/1.0'
         }
-        
+        print(f"[DEBUG] Llamando a Nominatim: {url} params={params}")
         response = requests.get(url, params=params, headers=headers, timeout=10)
-        
+        print(f"[DEBUG] Respuesta Nominatim status={response.status_code}")
         if response.status_code != 200:
+            print(f"[DEBUG] Error Nominatim: status={response.status_code}, body={response.text}")
             return None, None, None
-        
         resultados = response.json()
-        
+        print(f"[DEBUG] Respuesta Nominatim JSON: {resultados}")
         if not resultados:
+            print("[DEBUG] Nominatim no devolvio resultados")
             return None, None, None
-        
         # Filtrar solo resultados en España
         resultados_espana = [r for r in resultados if r.get('address', {}).get('country') == 'España']
-        
         if not resultados_espana:
+            print("[DEBUG] Nominatim no encontro resultados en España")
             return None, None, None
-        
         # Tomar el primer resultado
         lugar = resultados_espana[0]
         lat = float(lugar['lat'])
         lon = float(lugar['lon'])
-        
         # Extraer nombre de la ciudad
         address = lugar.get('address', {})
         nombre = (
@@ -60,15 +57,14 @@ def buscar_ciudad_nominatim(nombre_ciudad):
             address.get('municipality') or
             nombre_ciudad.title()
         )
-        
+        print(f"[DEBUG] Ciudad encontrada: {nombre} lat={lat} lon={lon}")
         return lat, lon, nombre
-        
     except Exception as e:
+        print(f"[DEBUG] Excepcion en buscar_ciudad_nominatim: {e}")
         return None, None, None
 
 
 def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
-    print(f"[DEBUG] obtener_pronostico_temperatura: ciudad={ciudad}, dias={dias}")
     """
     Obtiene el pronostico de temperatura para CUALQUIER ciudad española
     
@@ -80,34 +76,35 @@ def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
         Pronostico formateado como texto
     """
     try:
+        # Convertir dias a int si viene como string
+        try:
+            dias = int(dias)
+        except Exception as e:
+            print(f"[DEBUG] Error convirtiendo 'dias' a int: {e} valor recibido: {dias}")
+            return "Error: El parámetro 'dias' debe ser un número entero."
         # Validar dias
         if dias < 1 or dias > 16:
             return "Error: El numero de dias debe estar entre 1 y 16"
-        
         # Buscar ciudad
         lat, lon, nombre = buscar_ciudad_nominatim(ciudad)
-        
         if not lat:
             return f"Error: No se encontro la ciudad '{ciudad}' en España"
-        
         # Obtener pronostico de Open-Meteo
         url = "https://api.open-meteo.com/v1/forecast"
-        
         params = {
             'latitude': lat,
             'longitude': lon,
             'daily': 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max',
-            'timezone': 'Europe/Madrid',
-            'forecast_days': min(dias, 16)
+            'timezone': 'Europe/Madrid'
         }
-        
+        print(f"[DEBUG] Llamando a Open-Meteo: {url} params={params}")
         response = requests.get(url, params=params, timeout=15)
-        
+        print(f"[DEBUG] Respuesta Open-Meteo status={response.status_code}")
         if response.status_code != 200:
+            print(f"[DEBUG] Error Open-Meteo: status={response.status_code}, body={response.text}")
             return f"Error: No se pudo obtener el pronostico (HTTP {response.status_code})"
-        
         datos = response.json()
-        
+        print(f"[DEBUG] Respuesta Open-Meteo JSON: {datos}")
         daily = datos.get('daily', {})
         fechas = daily.get('time', [])
         temp_max = daily.get('temperature_2m_max', [])
@@ -115,7 +112,10 @@ def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
         prob_lluvia = daily.get('precipitation_probability_max', [])
         weather_codes = daily.get('weathercode', [])
         viento = daily.get('windspeed_10m_max', [])
-        
+        # Comprobar si hay datos suficientes
+        if not (fechas and temp_max and temp_min and prob_lluvia and weather_codes and viento):
+            print(f"[DEBUG] Datos insuficientes en respuesta Open-Meteo: {daily}")
+            return "Error: La respuesta de la API del servicio meteorológico no contiene datos suficientes."
         # Formatear resultado
         weather_descriptions = {
             0: 'Despejado',
@@ -140,24 +140,18 @@ def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
             96: 'Tormenta con granizo ligero',
             99: 'Tormenta con granizo intenso',
         }
-        
         dias_semana = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
-        
         resultado = [f"Pronostico de temperatura para {nombre}:", ""]
-        
         for i, fecha_str in enumerate(fechas):
             fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
             dia_semana = dias_semana[fecha.weekday()]
             fecha_formato = fecha.strftime('%d/%m/%Y')
-            
             temp_max_val = temp_max[i]
             temp_min_val = temp_min[i]
             prob_lluvia_val = prob_lluvia[i]
             weather_code = weather_codes[i]
             viento_val = viento[i]
-            
             weather_desc = weather_descriptions.get(weather_code, 'Desconocido')
-            
             hoy = datetime.now().date()
             if fecha.date() == hoy:
                 etiqueta = " (HOY)"
@@ -165,20 +159,17 @@ def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
                 etiqueta = " (MAÑANA)"
             else:
                 etiqueta = ""
-            
             resultado.append(f"{dia_semana} {fecha_formato}{etiqueta}:")
             resultado.append(f"  Temperatura: {temp_min_val:.1f}°C - {temp_max_val:.1f}°C")
             resultado.append(f"  Clima: {weather_desc}")
             resultado.append(f"  Probabilidad de lluvia: {prob_lluvia_val:.0f}%")
             resultado.append(f"  Viento: {viento_val:.1f} km/h")
             resultado.append("")
-        
         resultado.append("Fuente: Open-Meteo")
         resultado.append(f"Coordenadas: {lat:.4f}, {lon:.4f}")
-        
         return "\n".join(resultado)
-        
     except Exception as e:
+        print(f"[DEBUG] Excepcion en obtener_pronostico_temperatura: {e}")
         return f"Error al obtener el pronostico: {str(e)}"
 
 
@@ -186,21 +177,21 @@ def obtener_pronostico_temperatura(ciudad: str, dias: int = 3) -> str:
 TOOL_DEFINITION = {
     'type': 'function',
     'function': {
-        'name': 'consultar_clima',
-        'description': 'SOLO para consultas meteorológicas: temperatura, lluvia, clima, tiempo, humedad, viento, nublado, sol, pronóstico, semana, mañana, nieve, tormenta. Usar UNICAMENTE cuando el usuario pregunta por TIEMPO/CLIMA/TEMPERATURA/LLUVIA/HUMEDAD/VIENTO/NIEVE/TORMENTA. NUNCA usar para: habitantes, poblacion, demografia, geografia, historia, economia, cultura, superficie, densidad, gente, personas. Ejemplo SI: "temperatura Madrid", "lluvias Valencia", "¿va a nevar en Huesca?", "¿qué viento hará en Bilbao?". Ejemplo NO: "habitantes Barcelona", "poblacion Sevilla".',
+        'name': 'obtener_pronostico_temperatura',
+        'description': 'Obtiene el pronostico de temperatura y clima para CUALQUIER ciudad de España. Usa geocoding dinamico (SIN datos hardcodeados) para buscar cualquier ciudad, pueblo o municipio. Incluye temperatura maxima y minima, condiciones climaticas, probabilidad de lluvia y velocidad del viento para los proximos dias.',
         'parameters': {
             'type': 'object',
             'properties': {
                 'ciudad': {
                     'type': 'string',
-                    'description': 'Nombre de la ciudad española para consultar el clima'
+                    'description': 'Nombre de CUALQUIER ciudad española. Ejemplos: Madrid, Barcelona, Mataro, Alcobendas, San Sebastian, Pozuelo, Chinchon, etc. Funciona con ciudades grandes, pequeñas y pueblos.'
                 },
                 'dias': {
                     'type': 'integer',
-                    'description': 'Número de días para el pronóstico (1-7). Por defecto 3 días.',
+                    'description': 'Numero de dias de pronostico (entre 1 y 16). Por defecto 3.',
+                    'default': 3,
                     'minimum': 1,
-                    'maximum': 7,
-                    'default': 3
+                    'maximum': 16
                 }
             },
             'required': ['ciudad']
@@ -219,19 +210,6 @@ if __name__ == "__main__":
         'obtener_pronostico_temperatura': obtener_pronostico_temperatura
     }
     
-    palabras_clima = ['temperatura', 'clima', 'tiempo', 'lluvia', 'calor', 'frio', 'humedad', 'viento', 'nublado', 'sol', 'meteorologico', 'pronostico', 'manana', 'semana', 'nieve', 'tormenta']
-    palabras_no_clima = ['habitantes', 'poblacion', 'gente', 'personas', 'demografia', 'superficie', 'extension', 'economia', 'historia', 'cultura', 'cuantos', 'cuantas']
-
-    def es_pregunta_climatica(pregunta):
-        pregunta_lower = pregunta.lower()
-        for palabra in palabras_no_clima:
-            if palabra in pregunta_lower:
-                return False
-        for palabra in palabras_clima:
-            if palabra in pregunta_lower:
-                return True
-        return False
-
     def chat_con_herramientas():
         """
         Chat interactivo con Ollama usando la herramienta de temperatura
@@ -254,67 +232,64 @@ if __name__ == "__main__":
         messages = []
         
         while True:
+            # Obtener pregunta del usuario
             try:
                 user_input = input("Tu: ").strip()
             except (EOFError, KeyboardInterrupt):
                 print("\n\nAdios!")
                 break
+            
             if not user_input:
                 continue
+            
             if user_input.lower() in ['salir', 'exit', 'quit']:
                 print("Adios!")
                 break
-            print(f"[DEBUG] Pregunta recibida: {user_input}")
-            print(f"[DEBUG] ¿Es pregunta climática?: {es_pregunta_climatica(user_input)}")
+            
+            # Agregar mensaje del usuario
             messages.append({
                 'role': 'user',
                 'content': user_input
             })
-            print(f"[DEBUG] Mensajes enviados al LLM:")
-            pprint.pprint(messages)
-            if es_pregunta_climatica(user_input):
-                print(f"[DEBUG] Tool definition disponible: {TOOL_DEFINITION['function']['name']}")
-                response = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=messages,
-                    tools=[TOOL_DEFINITION]
-                )
-            else:
-                print(f"[DEBUG] Pregunta NO climática. Llamando al LLM sin tools...")
-                response = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=messages
-                )
-            print(f"[DEBUG] Respuesta del LLM:")
-            pprint.pprint(response)
+            
+            # Llamar a Ollama con herramientas
+            print(f"[DEBUG] Pregunta enviada al LLM: {messages[-1]['content']}")
+            response = ollama.chat(
+                model='llama3.1:8b',
+                messages=messages,
+                tools=[TOOL_DEFINITION]
+            )
+            print(f"[DEBUG] Respuesta del LLM: {response}")
+            # Agregar respuesta al historial
             messages.append(response['message'])
-            if es_pregunta_climatica(user_input) and response['message'].get('tool_calls'):
+            # Verificar si Ollama quiere usar una herramienta
+            if response['message'].get('tool_calls'):
                 print(f"[DEBUG] tool_calls detectados:")
                 for tool_call in response['message']['tool_calls']:
-                    pprint.pprint(tool_call)
                     function_name = tool_call['function']['name']
                     function_args = tool_call['function']['arguments']
                     print(f"[DEBUG] Ejecutando función: {function_name} con argumentos: {function_args}")
+                    # Ejecutar la funcion
                     if function_name in available_functions:
                         print(f"\n[Consultando {function_args.get('ciudad')}...]\n")
                         function_response = available_functions[function_name](**function_args)
-                        print(f"[DEBUG] Resultado de la función: {function_response[:100]}...")
+                        print(f"[DEBUG] Respuesta de la función {function_name}: {function_response}")
+                        # Agregar resultado al historial
                         messages.append({
                             'role': 'tool',
                             'content': function_response
                         })
+                # Llamar nuevamente a Ollama para que procese el resultado
                 final_response = ollama.chat(
                     model='llama3.1:8b',
                     messages=messages
                 )
-                print(f"[DEBUG] Respuesta final del LLM:")
-                pprint.pprint(final_response)
+                print(f"[DEBUG] Respuesta final del LLM: {final_response}")
                 print(f"Ollama: {final_response['message']['content']}\n")
                 messages.append(final_response['message'])
             else:
-                print(f"[DEBUG] El LLM NO ha solicitado llamar a la tool o no es pregunta climática.")
+                print(f"[DEBUG] No se requiere tool-call. Respuesta directa del LLM.")
                 print(f"Ollama: {response['message']['content']}\n")
-                messages.append(response['message'])
     
     # Ejecutar chat
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
@@ -326,64 +301,6 @@ if __name__ == "__main__":
         print()
         resultado = obtener_pronostico_temperatura("Mataro", 2)
         print(resultado)
-    elif len(sys.argv) > 1:
-        # Modo pregunta directa por argumento
-        pregunta = " ".join(sys.argv[1:]).strip()
-        print(f"[DEBUG] Pregunta por argumento: {pregunta}")
-        respuesta = None
-        while not respuesta:
-            # Simula una sola iteración del chat
-            messages = []
-            print(f"[DEBUG] Mensajes enviados al LLM:")
-            messages.append({'role': 'user', 'content': pregunta})
-            pprint.pprint(messages)
-            if es_pregunta_climatica(pregunta):
-                print(f"[DEBUG] Tool definition disponible: {TOOL_DEFINITION['function']['name']}")
-                response = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=messages,
-                    tools=[TOOL_DEFINITION]
-                )
-            else:
-                print(f"[DEBUG] Pregunta NO climática. Llamando al LLM sin tools...")
-                response = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=messages
-                )
-            print(f"[DEBUG] Respuesta del LLM:")
-            pprint.pprint(response)
-            messages.append(response['message'])
-            if es_pregunta_climatica(pregunta) and response['message'].get('tool_calls'):
-                print(f"[DEBUG] tool_calls detectados:")
-                for tool_call in response['message']['tool_calls']:
-                    pprint.pprint(tool_call)
-                    function_name = tool_call['function']['name']
-                    function_args = tool_call['function']['arguments']
-                    print(f"[DEBUG] Ejecutando función: {function_name} con argumentos: {function_args}")
-                    if function_name in available_functions:
-                        print(f"\n[Consultando {function_args.get('ciudad')}...]\n")
-                        function_response = available_functions[function_name](**function_args)
-                        print(f"[DEBUG] Resultado de la función: {function_response[:100]}...")
-                        messages.append({
-                            'role': 'tool',
-                            'content': function_response
-                        })
-                final_response = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=messages
-                )
-                print(f"[DEBUG] Respuesta final del LLM:")
-                pprint.pprint(final_response)
-                respuesta = final_response['message']['content']
-                print(f"Ollama: {respuesta}\n")
-                messages.append(final_response['message'])
-            else:
-                print(f"[DEBUG] El LLM NO ha solicitado llamar a la tool o no es pregunta climática.")
-                respuesta = response['message']['content']
-                print(f"Ollama: {respuesta}\n")
-                messages.append(response['message'])
-            if not respuesta:
-                print("[DEBUG] Respuesta vacía, reintentando...")
     else:
         # Modo chat interactivo
         chat_con_herramientas()

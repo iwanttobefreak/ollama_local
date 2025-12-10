@@ -13,7 +13,5 @@ if [ "$#" -gt 0 ]; then
   exec "$@"
 else
   # Mantén el contenedor vivo con un shell interactivo (opcional)
-  exec bash
+  exec tail -f /dev/null
 fi
-
-wait
