@@ -31,6 +31,9 @@ RUN rm /etc/localtime && \
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
+# Agregar activación del entorno virtual al inicio del contenedor
+RUN echo 'source /ollama-agente/bin/activate' >> /root/.bashrc
+
 # Exponer puerto de Ollama (por defecto 11434)
 EXPOSE 11434
 EXPOSE 5000

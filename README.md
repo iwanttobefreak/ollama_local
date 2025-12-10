@@ -1,17 +1,28 @@
 ## Tabla de Contenidos
 
 1. [Introducción](#introducción)
-2. [Cómo ejecutar un LLM](#cómo-ejecutar-un-llm)
+2. [Creación imágen de docker de Ollama](#creación-imágen-de-docker-de-ollama)
 3. [Lección 1: Tools con Ollama](#lección-1)
 4. [Lección 2: MCP Servers](#lección-2)
 
 ---
 
 ## Introducción
-Contenido de la introducción...
+Ejecución de modelos de APIs y agentes de IA 100% en local sin usar tokens ni servicios externos.
 
-## Cómo ejecutar un LLM
-Contenido sobre ejecución...
+## Creación imágen de docker de Ollama
+Descarga el repositorio. Dentro del repositorio hay un Dockerfile para usar ollama (modelo de LLM). Crearemos una imagen que se llame **ollama**
+```bash
+git clone https://github.com/iwanttobefreak/ollama_local.git
+cd ollama_local
+docker build -t ollama .
+```
+Nos crea una imagen con ollama y algunas bibliotecas necesarias que ocupa unos 4.71Gb
+```
+REPOSITORY                                   TAG              IMAGE ID      CREATED        SIZE
+localhost/ollama                             latest           5869e52488df  2 minutes ago  4.71 GB
+```
+
 
 ## Lección 1
 Contenido de la lección...
