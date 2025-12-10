@@ -54,27 +54,92 @@ docker run --rm -d --name ollama \
   ollama
 ```
 
-Ahora si entramos en el docker, vemos que no tiene descargado ningun LLM
+Mostrar LLMs cargados, esperamos 30 segundos que arranque y tiene por defecto llama3.2:1b que es ligero (en el momento de esta documentación, supongo que cambiará con el tiempo porque esto va muy rápido):
 ```bash
-docker exec -ti ollama bash
-```
-Mostrar LLMs cargados, no tenemos ninguno:
-```bash
-ollama list
+docker exec -ti ollama bash -c "ollama list"
+
 NAME    ID    SIZE    MODIFIED
-```
-Descargamos el modelo llama3.2:1b
-```bash
-ollama push llama3.2:1b
+llama3.2:1b    baf6a787fdff    1.3 GB    9 seconds ago
 ```
 
-Podemos descargar también otros modelos depende de lo que queramos usar:
+También los podemos mostrar por la API:
+```bash
+curl http://localhost:11434/api/tags
+```
+
+```json
+{
+  "models": [
+    {
+      "name": "llama3.2:1b",
+      "model": "llama3.2:1b",
+      "modified_at": "2025-12-10T10:54:58.961147297+01:00",
+      "size": 1321098329,
+      "digest": "baf6a787fdffd633537aa2eb51cfd54cb93ff08e28040095462bb63daf552878",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "llama",
+        "families": [
+          "llama"
+        ],
+        "parameter_size": "1.2B",
+        "quantization_level": "Q8_0"
+      }
+    }
+  ]
+}
+```
+
+Podemos descargar también otros modelos depende de lo que queramos usar
+```bash
+docker exec -ti ollama bash -c "ollama push llama3.1:8b"
+```
+o con la API:
+```bash
+curl -X POST http://localhost:11434/api/pull \
+  -H "Content-Type: application/json" \
+  -d '{"name": "llama3.1:8b"}'
+```
+Ejemplo de LLMs y tamaños
 ```bash
 NAME                       ID              SIZE      MODIFIED
 nomic-embed-text:latest    0a109f422b47    274 MB    34 hours ago
 llama3.2:1b                baf6a787fdff    1.3 GB    37 hours ago
 codellama:13b              9f438cb9cd58    7.4 GB    5 days ago
 llama3.1:8b                46e0c10c039e    4.9 GB    6 weeks ago
+```
+
+Probamos el LLM:
+```bash
+curl -X POST http://localhost:11434/api/chat \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama3.2:1b",
+        "messages": [
+            {"role": "user", "content": "¿Cuál es la capital de Francia?"}
+        ],
+        "stream": false
+    }'
+```
+Respuesta:
+```json
+{
+  "model": "llama3.2:1b",
+  "created_at": "2025-12-10T10:10:03.99293422Z",
+  "message": {
+    "role": "assistant",
+    "content": "La capital de Francia es París."
+  },
+  "done": true,
+  "done_reason": "stop",
+  "total_duration": 225175942,
+  "load_duration": 108852053,
+  "prompt_eval_count": 35,
+  "prompt_eval_duration": 9316088,
+  "eval_count": 10,
+  "eval_duration": 103798175
+}
 ```
 
 ## Lección 1
