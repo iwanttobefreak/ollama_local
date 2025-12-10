@@ -73,31 +73,28 @@ def chat_simple(pregunta, modelo='llama3.1:8b'):
     """
     Chat minimo con una sola tool
     """
-    print(f"Pregunta: {pregunta}")
-    
-    # 1. Primera llamada - Ollama decide si usar la tool
+    print(f"[DEBUG] Pregunta: {pregunta}")
+    print("[DEBUG] Llamando a Ollama con tools disponibles...")
     response = chat(
         model=modelo,
         messages=[{'role': 'user', 'content': pregunta}],
         tools=[tool_definition]
     )
-    
-    # 2. Si usa la tool, ejecutarla
+    print(f"[DEBUG] Respuesta de Ollama: {response}")
     if response.message.tool_calls:
+        print("[DEBUG] Ollama ha solicitado llamar a la tool.")
         tool_call = response.message.tool_calls[0]
+        print(f"[DEBUG] tool_call: {tool_call}")
         ciudad = tool_call.function.arguments['ciudad']
         dias = tool_call.function.arguments.get('dias', 3)
-        
-        # Validacion: solo usar si es realmente sobre clima
+        print(f"[DEBUG] Argumentos extraídos: ciudad={ciudad}, dias={dias}")
         if not es_pregunta_climatica(pregunta):
-            print(f"ADVERTENCIA: Pregunta no parece climatica: {pregunta}")
+            print(f"[ADVERTENCIA] Pregunta no parece climatica: {pregunta}")
             return "Lo siento, esa pregunta no es sobre clima o temperatura."
-        
-        print(f"Ejecutando tool para: {ciudad} ({dias} dias)")
+        print(f"[DEBUG] Ejecutando script externo para: {ciudad} ({dias} dias)")
         resultado = consultar_clima(ciudad, dias)
-        print(f"Resultado: {resultado[:50]}...")
-        
-        # 3. Segunda llamada con el resultado
+        print(f"[DEBUG] Resultado del script: {resultado[:100]}...")
+        print("[DEBUG] Enviando resultado de la tool a Ollama para respuesta final...")
         final_response = chat(
             model=modelo,
             messages=[
@@ -106,9 +103,10 @@ def chat_simple(pregunta, modelo='llama3.1:8b'):
                 {'role': 'tool', 'content': resultado}
             ]
         )
+        print(f"[DEBUG] Respuesta final de Ollama: {final_response}")
         return final_response.message.content
     else:
-        # Sin tools
+        print("[DEBUG] Ollama NO ha solicitado llamar a la tool. Respondiendo directamente.")
         return response.message.content
 
 if __name__ == "__main__":
