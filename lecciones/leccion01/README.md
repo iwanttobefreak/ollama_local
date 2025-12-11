@@ -368,3 +368,39 @@ Vemos que en tool_calls vienen 2 llamadas:
 
 Podemos hacer la tool sin scripts externos, que todo venga incluido en el mismo fichero:
 
+```
+>>> ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?
+[DEBUG] Pregunta recibida: ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?
+[DEBUG] Prompt enviado al LLM:
+  - role: user, content: ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?
+[DEBUG] Tool definition disponible: consultar_clima
+[DEBUG] Llamando al LLM (Ollama) con tools...
+[DEBUG] Respuesta completa del LLM:
+  - role: assistant
+  - content:
+  - tool_calls: [
+      function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '7'}),
+      function=Function(name='consultar_clima', arguments={'ciudad': 'Zamora', 'dias': '7'}),
+    ]
+[DEBUG] El LLM ha decidido llamar a la tool porque la pregunta coincide con la descripción y parámetros definidos.
+[DEBUG] tool_call: function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '7'})
+[DEBUG] Argumentos extraídos: ciudad=Barcelona, dias=7
+[DEBUG] Ejecutando función interna para: Barcelona (7 dias)
+[DEBUG] Llamando a Nominatim: https://nominatim.openstreetmap.org/search params={'q': 'Barcelona, España', 'format': 'json', 'limit': 5, 'addressdetails': 1}
+[DEBUG] Respuesta Nominatim status=200
+[DEBUG] Respuesta Nominatim JSON: [{'place_id': 76094835, 'licence': 'Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright', 'osm_type': 'relation', 'osm_id': 347950, 'lat': '41.3825802', 'lon': '2.1770730', 'class': 'boundary', 'type': 'administrative', 'place_rank': 16, 'importance': 0.8035003209691789, 'addresstype': 'city', 'name': 'Barcelona', 'display_name': 'Barcelona, Barcelonès, Barcelona, Catalunya, España', 'address': {'city': 'Barcelona', 'county': 'Barcelonès', 'province': 'Barcelona', 'ISO3166-2-lvl6': 'ES-B', 'state': 'Catalunya', 'ISO3166-2-lvl4': 'ES-CT', 'country': 'España', 'country_code': 'es'}, 'boundingbox': ['41.3170353', '41.4679135', '2.0524977', '2.2283555']}, {'place_id': 74703056, 'licence': 'Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright', 'osm_type': 'relation', 'osm_id': 349035, 'lat': '41.7578700', 'lon': '2.0311820', 'class': 'boundary', 'type': 'administrative', 'place_rank': 10, 'importance': 0.6327090619193868, 'addresstype': 'province', 'name': 'Barcelona', 'display_name': 'Barcelona, Catalunya, España', 'address': {'province': 'Barcelona', 'ISO3166-2-lvl6': 'ES-B', 'state': 'Catalunya', 'ISO3166-2-lvl4': 'ES-CT', 'country': 'España', 'country_code': 'es'}, 'boundingbox': ['41.1927078', '42.3233011', '1.3603839', '2.7780029']}]
+[DEBUG] Ciudad encontrada: Barcelona lat=41.3825802 lon=2.177073
+[DEBUG] Llamando a Open-Meteo: https://api.open-meteo.com/v1/forecast params={'latitude': 41.3825802, 'longitude': 2.177073, 'daily': 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max', 'timezone': 'Europe/Madrid'}
+[DEBUG] Respuesta Open-Meteo status=200
+[DEBUG] Respuesta Open-Meteo JSON: {'latitude': 41.4375, 'longitude': 2.1875, 'generationtime_ms': 0.1983642578125, 'utc_offset_seconds': 3600, 'timezone': 'Europe/Madrid', 'timezone_abbreviation': 'GMT+1', 'elevation': 30.0, 'daily_units': {'time': 'iso8601', 'temperature_2m_max': '°C', 'temperature_2m_min': '°C', 'precipitation_probability_max': '%', 'weathercode': 'wmo code', 'windspeed_10m_max': 'km/h'}, 'daily': {'time': ['2025-12-10', '2025-12-11', '2025-12-12', '2025-12-13', '2025-12-14', '2025-12-15', '2025-12-16'], 'temperature_2m_max': [19.4, 16.9, 16.7, 16.0, 15.4, 16.3, 16.8], 'temperature_2m_min': [6.7, 7.1, 7.8, 7.4, 6.4, 7.1, 7.2], 'precipitation_probability_max': [0, 0, 5, 4, 5, 31, 34], 'weathercode': [45, 45, 45, 45, 45, 45, 45], 'windspeed_10m_max': [7.7, 9.0, 7.0, 8.0, 7.3, 7.4, 7.9]}}
+[DEBUG] Resultado de la función: Pronostico de temperatura para Barcelona:
+
+Miercoles 10/12/2025 (HOY):
+  Temperatura: 6.7°C - 19.4°C...
+[DEBUG] Enviando resultado de la tool al LLM para respuesta final...
+[DEBUG] Respuesta final del LLM:
+  - role: assistant
+  - content: Según el pronóstico del clima para la semana que viene, Barcelona tendrá una temperatura media alrededor de 12°C con algunas lluvias y niebla en algunos días. Zamora tendrá un promedio de temperatura de 4°C con precipitaciones. Por lo tanto, la ciudad que hará más temperatura será Barcelona.
+
+Respuesta: Según el pronóstico del clima para la semana que viene, Barcelona tendrá una temperatura media alrededor de 12°C con algunas lluvias y niebla en algunos días. Zamora tendrá un promedio de temperatura de 4°C con precipitaciones. Por lo tanto, la ciudad que hará más temperatura será Barcelona.
+```
