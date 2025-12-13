@@ -1,487 +1,148 @@
-# Lección 2: MCP Servers (Model Context Protocol)
-
-## 🚀 Inicio Rápido
-
-```bash
-cd lecciones/leccion02
-
-# Opción 1: Usar el script interactivo
-./test_leccion02.sh
-
-# Opción 2: Instalar y probar manualmente
-pip install mcp ollama
-python3 mcp_client_minimo.py
+Entramos de forma interactiva para lanzar comandos:
+```
+docker exec -ti ollama bash
 ```
 
-> 📖 **Guía completa de instalación:** Ver [INSTALACION.md](INSTALACION.md)
-
----
-
-## Contenido
-
-1. [¿Qué es MCP?](#qué-es-mcp)
-2. [Ejemplo Mínimo (sin Ollama)](#ejemplo-mínimo-sin-ollama)
-3. [Ejemplo Completo con Temperatura](#ejemplo-completo-con-temperatura)
-4. [Instalación](#instalación-de-dependencias)
-5. [Cómo Ejecutar](#cómo-ejecutar)
-6. [Usando Docker con Ollama](#usando-ollama-con-docker)
-7. [Ventajas de MCP](#ventajas-de-mcp-sobre-tools-directas)
-8. [Comparación con Lección 1](#comparación-con-lección-1)
-
-**📚 Documentación adicional:**
-- [INSTALACION.md](INSTALACION.md) - Guía completa de instalación y troubleshooting
-- [COMPARACION.md](COMPARACION.md) - Comparación detallada Lección 1 vs Lección 2
-- [RESUMEN.md](RESUMEN.md) - Resumen visual y conceptos clave
-- [MODELOS.md](MODELOS.md) - Comparación de modelos Ollama (llama3.1:8b vs llama3.2:3b)
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Solución de problemas comunes
-- [VALIDACION_TIPOS.md](VALIDACION_TIPOS.md) - ⚠️ Importante: Cómo validar tipos de parámetros en MCP
-
----
-
-## ¿Qué es MCP?
-
-MCP (Model Context Protocol) es un protocolo estándar creado por Anthropic que permite a los modelos de lenguaje conectarse con **servidores externos** que proporcionan datos y herramientas de forma estandarizada.
-
-### Diferencia con Tools (Lección 1):
-
-- **Tools (Lección 1)**: El script Python ejecuta directamente comandos locales
-- **MCP Servers (Lección 2)**: Un servidor externo proporciona las herramientas y el LLM se conecta a él
-
-## Arquitectura MCP
-
+Si queremos hacer acciones, el LLM nos dice que no puede:
 ```
-┌─────────────┐         ┌─────────────┐         ┌──────────────┐
-│   Cliente   │ ◄─────► │ MCP Server  │ ◄─────► │   Recursos   │
-│  (Ollama)   │   MCP   │  (Python)   │         │  (APIs, DB)  │
-└─────────────┘         └─────────────┘         └──────────────┘
+ollama run llama3.1:8b
+
+>>> ¿Me puedes crear el fichero /tmp/prueba.txt?
+No, no puedo crear un archivo en tu sistema de archivos. ¿En qué puedo ayudarte con respecto a crear un archivo de
+texto?
 ```
 
----
+En este caso vamos a arranca un MCP server que contiene un conjunto de herramientas especificas para un conjunto de utilidades. Por ejemplo para utilides de ficheros.
 
-## Ejemplo Mínimo (sin Ollama)
+Para usar el conector entre LLM y los MCP servers neceistamos el paquete de python **ollama-mcp-bridge** que ya viene instalado en la imagen de docker.
 
-Antes de integrar con Ollama, veamos un ejemplo **súper simple** de MCP:
+Ahora usaremos el MCP server de:
+https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
 
-### Servidor Mínimo: `mcp_server_minimo.py`
+Se puede usar con docker o npx. Lo instalamos con npx (que ya viene en la imagen de docker)
 
+Tenemos el fichero **scrics/tools/mcp-bridge-config-filesystem.json** que hace de conector entre LLM y MCP:
 ```python
-#!/usr/bin/env python3
-import asyncio
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
-import mcp.server.stdio
-import mcp.types as types
-
-server = Server("ejemplo-minimo")
-
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    return [
-        types.Tool(
-            name="saludar",
-            description="Devuelve un saludo personalizado",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "nombre": {"type": "string", "description": "Nombre de la persona"}
-                },
-                "required": ["nombre"]
-            }
-        )
-    ]
-
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict | None) -> list[types.TextContent]:
-    if name != "saludar":
-        raise ValueError(f"Herramienta desconocida: {name}")
-    nombre = arguments.get("nombre", "desconocido")
-    return [types.TextContent(type="text", text=f"¡Hola {nombre}! Bienvenido al servidor MCP.")]
-
-async def main():
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream, 
-            InitializationOptions(server_name="ejemplo-minimo", server_version="1.0.0",
-                capabilities=server.get_capabilities(notification_options=NotificationOptions(), 
-                    experimental_capabilities={})))
-
-if __name__ == "__main__":
-    asyncio.run(main())
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/tmp"
+      ]
+    }
+  }
+}
 ```
-
-### Cliente Mínimo: `mcp_client_minimo.py`
-
-```python
-#!/usr/bin/env python3
-import asyncio
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
-async def main():
-    print("🧪 PRUEBA MÍNIMA DE MCP\n")
-    
-    server_params = StdioServerParameters(command="python3", args=["mcp_server_minimo.py"])
-    
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            
-            tools = await session.list_tools()
-            print(f"✅ Herramientas: {tools.tools[0].name}")
-            
-            resultado = await session.call_tool("saludar", {"nombre": "María"})
-            print(f"📨 Respuesta: {resultado.content[0].text}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Ejecutar el ejemplo mínimo:
-
+Lo ejecutamos con:
 ```bash
-cd lecciones/leccion02
-pip install mcp
-python3 mcp_client_minimo.py
+ollama-mcp-bridge --config /app/scrics/tools/mcp-bridge-config-filesystem.json
+```
+Vemos que la primera vez se descarga el MCP server. Se queda escuchando en el puerto 8000 (modificarlo en el fichero). Vemos también que carga las tools del MCP server:
+```
+2025-12-11 10:03:25.856 | INFO     | ollama_mcp_bridge.mcp_manager:_connect_server:66 - Connected to 'filesystem' with 14 tools
 ```
 
-Salida esperada:
+Ahora abrimos otra consola de ollama:
 ```
-🧪 PRUEBA MÍNIMA DE MCP
+docker exec -ti ollama bash
+````
 
-✅ Herramientas: saludar
-📨 Respuesta: ¡Hola María! Bienvenido al servidor MCP.
-```
+Levantamos el chat con mcp-server
+python /app/scrics/tools/mcp-chat-filesystem.py
 
----
-
-## Ejemplo Completo con Temperatura
-
-Ahora integramos MCP con Ollama para crear un asistente meteorológico inteligente.
-
-### 1. Arquitectura
-
-### 1. Arquitectura
-
-```
-Usuario → Cliente Python → Ollama (LLM) ⟷ MCP Server → Script Temperatura → API Open-Meteo
-```
-
-El servidor MCP básico necesita:
-- Definir las herramientas (tools) que ofrece
-- Implementar la lógica de cada herramienta
-- Ejecutarse y esperar conexiones
-
-### 2. Código del Servidor: `mcp_server_temperatura.py`
-
-Este servidor expone una herramienta para obtener temperatura de ciudades españolas:
-
-```python
-#!/usr/bin/env python3
-"""
-Servidor MCP simple para consultar temperatura
-"""
-import asyncio
-import subprocess
-from mcp.server import Server, NotificationOptions
-from mcp.server.models import InitializationOptions
-import mcp.server.stdio
-import mcp.types as types
-
-# Crear el servidor MCP
-server = Server("temperatura-server")
-
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    """Lista las herramientas disponibles"""
-    return [
-        types.Tool(
-            name="obtener_temperatura",
-            description="Obtiene el pronóstico de temperatura para ciudades españolas",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "ciudad": {
-                        "type": "string",
-                        "description": "Nombre de la ciudad española"
-                    },
-                    "dias": {
-                        "type": "integer",
-                        "description": "Número de días de pronóstico (1-16)",
-                        "default": 3
-                    }
-                },
-                "required": ["ciudad"]
-            }
-        )
-    ]
-
-@server.call_tool()
-async def handle_call_tool(
-    name: str, arguments: dict | None
-) -> list[types.TextContent]:
-    """Ejecuta la herramienta solicitada"""
-    
-    if name != "obtener_temperatura":
-        raise ValueError(f"Herramienta desconocida: {name}")
-    
-    ciudad = arguments.get("ciudad")
-    dias = arguments.get("dias", 3)
-    
-    # Ejecutar el script de temperatura
-    try:
-        resultado = subprocess.run(
-            ['python3', 'script_pronostico_temperatura.py', ciudad, str(dias)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd="/Users/T054810/ollama_local/lecciones/leccion01"
-        )
-        
-        if resultado.returncode == 0:
-            return [types.TextContent(
-                type="text",
-                text=resultado.stdout
-            )]
-        else:
-            return [types.TextContent(
-                type="text",
-                text=f"Error: {resultado.stderr}"
-            )]
-    except Exception as e:
-        return [types.TextContent(
-            type="text",
-            text=f"Error ejecutando script: {str(e)}"
-        )]
-
-async def main():
-    """Punto de entrada del servidor"""
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="temperatura-server",
-                server_version="1.0.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                )
-            )
-        )
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### 3. Cliente para Conectar con el Servidor MCP: `mcp_client_temperatura.py`
-
-```python
-#!/usr/bin/env python3
-"""
-Cliente simple que se conecta al servidor MCP de temperatura
-"""
-import asyncio
-import ollama
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
-async def main():
-    print("="*60)
-    print("🌐 CLIENTE MCP - Conexión con Servidor de Temperatura")
-    print("="*60)
-    
-    # Parámetros del servidor MCP
-    server_params = StdioServerParameters(
-        command="python3",
-        args=["mcp_server_temperatura.py"],
-        env=None
-    )
-    
-    # Conectar al servidor MCP
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            # Inicializar sesión
-            await session.initialize()
-            
-            # Listar herramientas disponibles
-            tools = await session.list_tools()
-            print(f"\n✅ Conectado al servidor MCP")
-            print(f"📋 Herramientas disponibles: {len(tools.tools)}")
-            
-            for tool in tools.tools:
-                print(f"   - {tool.name}: {tool.description}")
-            
-            print("\n" + "="*60)
-            print("Escribe 'salir' para terminar\n")
-            
-            # Chat con el usuario
-            mensajes = [
-                {
-                    'role': 'system',
-                    'content': 'Eres un asistente meteorológico. Usa las herramientas disponibles para responder preguntas sobre el tiempo.'
-                }
-            ]
-            
-            while True:
-                pregunta = input("\n👤 Tú: ").strip()
-                
-                if pregunta.lower() in ['salir', 'exit', 'quit']:
-                    print("👋 ¡Hasta luego!")
-                    break
-                
-                if not pregunta:
-                    continue
-                
-                mensajes.append({'role': 'user', 'content': pregunta})
-                
-                # Convertir tools MCP a formato Ollama
-                tools_ollama = []
-                for tool in tools.tools:
-                    tools_ollama.append({
-                        'type': 'function',
-                        'function': {
-                            'name': tool.name,
-                            'description': tool.description,
-                            'parameters': tool.inputSchema
-                        }
-                    })
-                
-                # Primera llamada: LLM decide
-                print("\n🤔 Pensando...")
-                respuesta = ollama.chat(
-                    model='llama3.1:8b',
-                    messages=mensajes,
-                    tools=tools_ollama
-                )
-                
-                # ¿El LLM quiere usar una herramienta?
-                if respuesta['message'].get('tool_calls'):
-                    print("✅ Usando herramienta MCP...")
-                    
-                    tool_call = respuesta['message']['tool_calls'][0]
-                    tool_name = tool_call['function']['name']
-                    tool_args = tool_call['function']['arguments']
-                    
-                    print(f"🔧 Herramienta: {tool_name}")
-                    print(f"📝 Argumentos: {tool_args}")
-                    
-                    # Llamar a la herramienta en el servidor MCP
-                    resultado = await session.call_tool(tool_name, tool_args)
-                    
-                    resultado_texto = resultado.content[0].text
-                    
-                    # Añadir resultado al historial
-                    mensajes.append(respuesta['message'])
-                    mensajes.append({
-                        'role': 'tool',
-                        'content': resultado_texto
-                    })
-                    
-                    # Segunda llamada: LLM procesa el resultado
-                    respuesta = ollama.chat(
-                        model='llama3.1:8b',
-                        messages=mensajes
-                    )
-                
-                # Mostrar respuesta
-                print(f"\n🤖 Asistente: {respuesta['message']['content']}")
-                mensajes.append(respuesta['message'])
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-## Instalación de Dependencias
-
-Para ejecutar los ejemplos de MCP necesitas instalar el SDK de MCP:
-
+Ahora le pedimos lo mismo que antes y nos crea el fichero:
 ```bash
-pip install mcp
-pip install ollama
+>>> ¿Me puedes crear el fichero /tmp/prueba.txt?
+[RESPUESTA MCP]
+{"model":"qwen2.5:latest","created_at":"2025-12-11T14:26:54.79427683Z","message":{"role":"assistant","content":"He creado el archivo `/tmp/prueba.txt` para ti. No has proporcionado ningún contenido, así que el archivo se creará pero estará vacío. Si deseas escribir algún texto en él, puedes indicármelo y lo haré. ¿Necesitas agregar algún contenido al archivo?"},"done":true,"done_reason":"stop","total_duration":4846533696,"load_duration":57815419,"prompt_eval_count":1689,"prompt_eval_duration":1355663480,"eval_count":64,"eval_duration":3387944979}
+
+[RESPUESTA FORMATEADA]
+He creado el archivo `/tmp/prueba.txt` para ti. No has proporcionado ningún contenido, así que el archivo se creará pero estará vacío. Si deseas escribir algún texto en él, puedes indicármelo y lo haré. ¿Necesitas agregar algún contenido al archivo?
 ```
 
-## Cómo Ejecutar
+Le podemos preguntar que herramientas tiene disponibles:
+```
+>>> ¿Cuantas tools tienes disponibles?
+[RESPUESTA MCP]
+{"model":"qwen2.5:latest","created_at":"2025-12-11T14:23:15.60276718Z","message":{"role":"assistant","content":"Tengo disponibles 12 herramientas. Aquí está la lista con sus nombres:\n\n1. filesystem.read_text_file\n2. filesystem.write_file\n3. filesystem.edit_file\n4. filesystem.create_directory\n5. filesystem.list_directory\n6. filesystem.list_directory_with_sizes\n7. filesystem.directory_tree\n8. filesystem.move_file\n9. filesystem.search_files\n10. filesystem.get_file_info\n11. filesystem.read_media_file\n12. filesystem.read_multiple_files\n\nCada una de estas herramientas tiene un propósito específico para ayudar con diferentes tareas relacionadas con el sistema de archivos."},"done":true,"done_reason":"stop","total_duration":64743332070,"load_duration":2230084553,"prompt_eval_count":1633,"prompt_eval_duration":55669300366,"eval_count":126,"eval_duration":6799383551}
 
-### Opción 1: Ejecutar el Servidor Manualmente (para debugging)
+[RESPUESTA FORMATEADA]
+Tengo disponibles 12 herramientas. Aquí está la lista con sus nombres:
 
-En una terminal, ejecuta el servidor:
-```bash
-cd lecciones/leccion02
-python3 mcp_server_temperatura.py
+1. filesystem.read_text_file
+2. filesystem.write_file
+3. filesystem.edit_file
+4. filesystem.create_directory
+5. filesystem.list_directory
+6. filesystem.list_directory_with_sizes
+7. filesystem.directory_tree
+8. filesystem.move_file
+9. filesystem.search_files
+10. filesystem.get_file_info
+11. filesystem.read_media_file
+12. filesystem.read_multiple_files
+
+Cada una de estas herramientas tiene un propósito específico para ayudar con diferentes tareas relacionadas con el sistema de archivos.
 ```
 
-El servidor se quedará esperando conexiones.
+Herramientas para repositorios GIT:
+https://github.com/modelcontextprotocol/servers/tree/main/src/git
 
-### Opción 2: Ejecutar el Cliente (automático)
+Para este MCP server se necista el paquete uvx de os que ya está instalado en la imágen:
 
-El cliente inicia el servidor automáticamente:
-```bash
-cd lecciones/leccion02
-python3 mcp_client_temperatura.py
+Lanzamos el conector entre LLM y MCP server
+```
+ollama-mcp-bridge --config /app/scrics/tools/mcp-bridge-config-git.json
+```
+Vemos que la primera vez nos instala las herramientas para el MCP server
+
+Ahora en otra ventana abrimos el chat:
+```
+docker exec -ti ollama bash
 ```
 
-## Usando Ollama con Docker
-
-Si tienes Ollama en Docker (contenedor llamado "ollama"), asegúrate de que esté corriendo:
-
-```bash
-# Ver si está corriendo
-docker ps | grep ollama
-
-# Si no está corriendo, iniciarlo
-docker start ollama
-
-# Verificar que el modelo esté disponible
-docker exec ollama ollama list
+```
+python /app/scrics/tools/mcp-chat-git.py
 ```
 
-Para ejecutar los scripts con Ollama en Docker, el cliente Python se conecta al API de Ollama (por defecto en `http://localhost:11434`).
-
-## Ejemplo de Uso
-
+Preguntamos que herramientas tiene ahora:
 ```
-👤 Tú: ¿Qué temperatura hará mañana en Madrid?
+>>> enumerame las herramientas de git que tienes disponibles
+[RESPUESTA MCP]
+{"model":"qwen2.5:latest","created_at":"2025-12-11T14:45:31.628047421Z","message":{"role":"assistant","content":"Las herramientas de Git disponibles a través de mí son las siguientes:\n\n1. `git.git_status`: Muestra el estado del árbol de trabajo.\n2. `git.git_diff_unstaged`: Muestra los cambios en el directorio de trabajo que aún no han sido marcados para un commit.\n3. `git.git_diff_staged`: Muestra los cambios que están listos para ser commiteados (marcados para un commit).\n4. `git.git_diff`: Muestra las diferencias entre ramas o commits específicos.\n5. `git.git_commit`: Registra los cambios en el repositorio.\n6. `git.git_add`: Agrega el contenido de archivos al área de preparación.\n7. `git.git_reset`: Desmarca todos los cambios marcados para un commit.\n8. `git.git_log`: Muestra los logs de comit.\n9. `git.git_create_branch`: Crea una nueva rama a partir de una rama base (opcional).\n10. `git.git_checkout`: Cambia de rama actual.\n11. `git.git_show`: Muestra el contenido de un commit específico.\n12. `git.git_branch`: Lista las ramas Git.\n\nEstas herramientas cubren una variedad de tareas comunes en el uso de Git, desde el seguimiento y marcar cambios hasta la gestión de diferentes ramas y commits."},"done":true,"done_reason":"stop","total_duration":16172482439,"load_duration":65436544,"prompt_eval_count":1110,"prompt_eval_duration":558160928,"eval_count":291,"eval_duration":15456992642}
 
-🤔 Pensando...
-✅ Usando herramienta MCP...
-🔧 Herramienta: obtener_temperatura
-📝 Argumentos: {'ciudad': 'Madrid', 'dias': 3}
+[RESPUESTA FORMATEADA]
+Las herramientas de Git disponibles a través de mí son las siguientes:
 
-🤖 Asistente: Según el pronóstico para Madrid:
+1. `git.git_status`: Muestra el estado del árbol de trabajo.
+2. `git.git_diff_unstaged`: Muestra los cambios en el directorio de trabajo que aún no han sido marcados para un commit.
+3. `git.git_diff_staged`: Muestra los cambios que están listos para ser commiteados (marcados para un commit).
+4. `git.git_diff`: Muestra las diferencias entre ramas o commits específicos.
+5. `git.git_commit`: Registra los cambios en el repositorio.
+6. `git.git_add`: Agrega el contenido de archivos al área de preparación.
+7. `git.git_reset`: Desmarca todos los cambios marcados para un commit.
+8. `git.git_log`: Muestra los logs de comit.
+9. `git.git_create_branch`: Crea una nueva rama a partir de una rama base (opcional).
+10. `git.git_checkout`: Cambia de rama actual.
+11. `git.git_show`: Muestra el contenido de un commit específico.
+12. `git.git_branch`: Lista las ramas Git.
 
-Mañana (Sábado 06/12/2025):
-- Temperatura: Entre 9.8°C y 19.1°C
-- Clima: Nublado
-- Probabilidad de lluvia: 8%
-- Viento: 12.5 km/h
+Estas herramientas cubren una variedad de tareas comunes en el uso de Git, desde el seguimiento y marcar cambios hasta la gestión de diferentes ramas y commits.
 ```
 
-## Ventajas de MCP sobre Tools Directas
+Pero si le preguntamos por crear un fichero en el filesystem nos dice que no puede porque no tiene cargado el otro MCP server pero te da respuesta que tiene que ver con git:
+```
+>>> Crea el fichero /tmp/git.txt
+[RESPUESTA MCP]
+{"model":"qwen2.5:latest","created_at":"2025-12-11T15:07:53.454907769Z","message":{"role":"assistant","content":"To create the file `/tmp/git.txt`, we will first need to initialize a Git repository in that directory if it doesn't already exist. Then, we can add and commit an empty file to track its creation.\n\nLet's start by initializing a new Git repository in `/tmp/` (assuming you want the repo there), and create `git.txt` inside it.\n"},"done":true,"done_reason":"stop","total_duration":45151043964,"load_duration":2511449073,"prompt_eval_count":1109,"prompt_eval_duration":37494787239,"eval_count":98,"eval_duration":5108953980}
 
-1. **Separación de responsabilidades**: El servidor MCP puede ejecutarse en otra máquina
-2. **Reutilización**: Múltiples clientes pueden conectarse al mismo servidor
-3. **Estándares**: MCP es un protocolo estándar compatible con múltiples LLMs
-4. **Escalabilidad**: Fácil de escalar y distribuir
+[RESPUESTA FORMATEADA]
+To create the file `/tmp/git.txt`, we will first need to initialize a Git repository in that directory if it doesn't already exist. Then, we can add and commit an empty file to track its creation.
 
-## Comparación con Lección 1
+Let's start by initializing a new Git repository in `/tmp/` (assuming you want the repo there), and create `git.txt` inside it.
+````
 
-| Aspecto | Lección 1 (Tools) | Lección 2 (MCP) |
-|---------|-------------------|-----------------|
-| Arquitectura | Monolítica | Cliente-Servidor |
-| Reutilización | Baja | Alta |
-| Complejidad | Simple | Moderada |
-| Escalabilidad | Limitada | Excelente |
-| Estándar | Específico | Protocolo MCP |
-
-## Próximos Pasos
-
-- Crear servidores MCP con múltiples herramientas
-- Conectar con APIs externas reales
-- Implementar autenticación en servidores MCP
-- Desplegar servidores MCP en la nube
-
----
-
-**Recursos**:
-- [Documentación MCP](https://modelcontextprotocol.io/)
-- [MCP GitHub](https://github.com/modelcontextprotocol)
-- [Ollama Docs](https://ollama.ai/docs)
+Podemos añadir los dos MCP servers al conector, con el fichero 

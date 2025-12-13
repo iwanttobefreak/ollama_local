@@ -21,3 +21,6 @@ langchain_chroma>=1.0.0
 langchain_classic>=1.0.0
 langchain_ollama>=1.0.0
 langchain_text_splitters>=1.0.0
+
+uv
+ollama-mcp-bridge

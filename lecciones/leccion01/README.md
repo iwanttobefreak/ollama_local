@@ -1,5 +1,6 @@
 Hacemos una pregunta al LLM local, con comando docker, API o prompt (como hemos visto en la creación del docker en la lección 0):
-**NOTA: Pongo los comandos con "bash -c" para que se vea mas claro que se ejecuta, pero se puede ejecutar sin, da igual cualquiera de los dos, pero "ollama ollama" es un poco repetitivo XD:
+
+**NOTA: Pongo los comandos con "bash -c" para que se vea mas claro que se ejecuta, pero se puede ejecutar sin, da igual cualquiera de los dos, pero "ollama ollama" es un poco repetitivo XD**:
 ```bash
 docker exec -ti ollama bash -c "ollama run llama3.1:8b"
 docker exec -ti ollama ollama run llama3.1:8b
@@ -79,7 +80,7 @@ Primero generamos un script con python que sea capaz de darnos información. Por
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/pronostico_temperatura.py"
+docker exec -ti ollama bash -c "python /app/scrics/tools/script_temperatura.py"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,7 +106,7 @@ docker exec -ti ollama bash -c "python /app/scrics/tools/pronostico_temperatura.
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/pronostico_temperatura.py Barcelona 2"
+docker exec -ti ollama bash -c "python /app/scrics/tools/script_temperatura.py Barcelona 2"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -223,7 +224,7 @@ while True:
     mensajes.append({'role': 'assistant', 'content': respuesta['message']['content']})
 ```
 
-El system prompt lo podemos ir definiendo más exactamente cómo debe actuar el agente, podemos añadir instrucciones específicas:
+El system prompt lo podemos ir definiendo más exactamente cómo debe actuar el LLM, podemos añadir instrucciones específicas:
 ```python
 messages = [
     {
@@ -255,7 +256,7 @@ KEYWORDS = [
 
 Ejemplo de tool simple para obtener temperatura:
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura.py"
+docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura_con_script.py"
 ```
 
 ```
@@ -367,9 +368,15 @@ Vemos que en tool_calls vienen 2 llamadas:
 ```
 
 Podemos hacer la tool sin scripts externos, que todo venga incluido en el mismo fichero:
+```bash
+docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura_sin_script.py"
+```
 
 ```
 >>> ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?
+```
+
+```
 [DEBUG] Pregunta recibida: ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?
 [DEBUG] Prompt enviado al LLM:
   - role: user, content: ¿Dónde va a hacer mas temperatura la semana que viene? ¿En Barcelona o Zamora?

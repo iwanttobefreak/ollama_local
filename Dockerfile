@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Ollama
