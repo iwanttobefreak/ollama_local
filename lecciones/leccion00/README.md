@@ -15,27 +15,35 @@ docker build -t ollama .
 - **Volúmenes:**
   - `DIR_DATOS`: Volumen externo para datos locales (BBDD, txt de contextos, etc.)
   - `DIR_LLM`: Volumen para los modelos LLM (recomendado fuera del contenedor para reutilizar y ahorrar espacio)
-  - `DIR_SCRIPTS`: Volumen para los scripts (recomendado mapear con el repositorio de GIT)
 
 - **Otros:**
   - `MEMORIA`: Memoria asignada al contenedor Docker (si no tienes GPU, pon suficiente RAM)
 
-Ejemplo:
+Creamos los directorios para DIR_LLM y DIR_DATOS y los otros parámetros podrían ser:
 ```bash
+DIR_LLM=/ollama/llm
+DIR_DATOS=/ollama/datos
 PUERTO_OLLAMA=11434
 PUERTO_FLASK=5000
-DIR_LLM=/ollama/llm
-DIR_SCRIPTS=/ollama/scripts
-DIR_DATOS=/ollama/datos
 MEMORIA=16g
 ```
+
+Descargarmos el repositorio y desde dentro del repositorio construimos la imagen del repositorio:
+```
+git clone https://github.com/iwanttobefreak/ollama_local.git
+cd ollama_local
+docker build -t ollama .
+```
+
+Una vez construida la imagen, levantamos el contenedor de docker
 
 ```bash
 docker run --rm -d --name ollama \
   -p $PUERTO_OLLAMA:11434 \
   -p $PUERTO_FLASK:5000 \
   --memory="$MEMORIA" \
-  -v $DIR_SCRIPTS:/app/scrics \
+  -v ${PWD}/scrics:/app/scrics \
+  -v ${PWD}/lecciones:/app/lecciones \
   -v $DIR_LLM:/root/.ollama \
   -v $DIR_DATOS:/app/datos \
   ollama
