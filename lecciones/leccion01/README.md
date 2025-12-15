@@ -1,6 +1,9 @@
+**Como usar TOOLS con un LLM**
+Tools son herramientas externas a un LLM para poder buscar información fuera del LLM, ejecutar consultas, realizar operaciones.....
+
 Hacemos una pregunta al LLM local, con comando docker, API o prompt (como hemos visto en la creación del docker en la lección 0):
 
-**NOTA: Pongo los comandos con "bash -c" para que se vea mas claro que se ejecuta, pero se puede ejecutar sin, da igual cualquiera de los dos, pero "ollama ollama" es un poco repetitivo XD**:
+**NOTA: Pongo los comandos con "bash -c" para que se vea mas claro que se ejecuta, pero se puede ejecutar sin, da igual cualquiera de los dos, pero "ollama ollama" es un poco repetitivo XD. Estos dos comandos hacen lo mismo:**
 ```bash
 docker exec -ti ollama bash -c "ollama run llama3.1:8b"
 docker exec -ti ollama ollama run llama3.1:8b
@@ -9,7 +12,7 @@ docker exec -ti ollama ollama run llama3.1:8b
 Por ejemplo via prompt:
 ```bash
 docker exec -ti ollama bash -c "ollama run llama3.1:8b"
->>> cual es la capital de Francia?
+>>> ¿Cual es la capital de Francia?
 La capital de Francia es París.
 ```
 
@@ -80,7 +83,7 @@ Primero generamos un script con python que sea capaz de darnos información. Por
 Para ver como ejecutarlo, lo ejecutyamos sin parámetros:
 
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/script_temperatura.py"
+docker exec -ti ollama bash -c "python /app/lecciones/leccion01/script_pronostico_temperatura.py"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,7 +109,7 @@ docker exec -ti ollama bash -c "python /app/scrics/tools/script_temperatura.py"
 
 Si queremos sacar el pronóstico de Barcelona de los siguientes 3 días ejecutamos:
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/script_temperatura.py Barcelona 2"
+docker exec -ti ollama bash -c "python /app/lecciones/leccion01/script_pronostico_temperatura.py Barcelona 2"
 ```
 
 > - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -150,7 +153,7 @@ Hasta aquí solo es python, no hay IA.
 
 Ahora vamos a integrar este script de python con una tool que sea capaz de ejecutar ollama.
 
-La estructura básica de una tool definition sigue este formato:
+La estructura básica de la parte de TOOL_DEFINITION de una tool sigue este formato:
 
 ```python
 TOOL_DEFINITION = {
@@ -188,7 +191,7 @@ TOOL_DEFINITION = {
 El LLM decide "quiero usar esta tool con estos parámetros" y devuelve un json que lo ejecuta el script de python que está escrito debajo de la **TOOL_DEFINITION**.
 
 Un ejemplo de prompt que te recoge la pregunta, separa los parámetros y ejecuta el script (API) para obtener temperatura:
-```
+```python
 # Función que ejecuta el script
 def obtener_temp(ciudad):
     resultado = subprocess.run(
@@ -256,7 +259,7 @@ KEYWORDS = [
 
 Ejemplo de tool simple para obtener temperatura:
 ```
-docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura_con_script.py"
+docker exec -ti ollama bash -c "python /app/lecciones/leccion01/tool_temperatura_con_script.py"
 ```
 
 ```
@@ -282,25 +285,44 @@ Respuesta:
 [DEBUG] Respuesta completa del LLM:
   - role: assistant
   - content:
-  - tool_calls: [ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'}))]
+  - tool_calls: [
+      function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '2'}),
+    ]
 [DEBUG] El LLM ha decidido llamar a la tool porque la pregunta coincide con la descripción y parámetros definidos.
-[DEBUG] tool_call: function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'})
-[DEBUG] Argumentos extraídos: ciudad=Barcelona, dias=1
-[DEBUG] Ejecutando script externo para: Barcelona (1 dias)
+[DEBUG] tool_call: function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '2'})
+[DEBUG] Argumentos extraídos: ciudad=Barcelona, dias=2
+[DEBUG] Ejecutando script externo para: Barcelona (2 dias)
 [DEBUG] Resultado del script: ======================================================================
 PRONOSTICO DE TEMPERATURA - C...
 [DEBUG] Enviando resultado de la tool al LLM para respuesta final...
 [DEBUG] Respuesta final del LLM:
   - role: assistant
-  - content: El pronóstico del tiempo para Barcelona mañana es de niebla con una temperatura de 6,7°C a 19,6°C y una probabilidad de lluvia del 0%. El viento será suave con una velocidad de 8 km/h.
+  - content: Según la información proporcionada, el clima en Barcelona mañana (Martes) será:
 
-Respuesta: El pronóstico del tiempo para Barcelona mañana es de niebla con una temperatura de 6,7°C a 19,6°C y una probabilidad de lluvia del 0%. El viento será suave con una velocidad de 8 km/h.
+* Temperatura: 10.9°C - 15.5°C
+* Clima: Chubascos ligeros
+* Probabilidad de lluvia: 55%
+* Viento: 16.0 km/h
+
+Es importante tener en cuenta que estos datos son previstos y pueden variar dependiendo de las condiciones climáticas actuales y futuras. Si deseas obtener información más actualizada o precisa, te recomendaría consultar fuentes oficiales como el Servicio Meteorológico Nacional (AEMET) o aplicaciones de clima especializadas.
+
+Respuesta: Según la información proporcionada, el clima en Barcelona mañana (Martes) será:
+
+* Temperatura: 10.9°C - 15.5°C
+* Clima: Chubascos ligeros
+* Probabilidad de lluvia: 55%
+* Viento: 16.0 km/h
+
+Es importante tener en cuenta que estos datos son previstos y pueden variar dependiendo de las condiciones climáticas actuales y futuras. Si deseas obtener información más actualizada o precisa, te recomendaría consultar fuentes oficiales como el Servicio Meteorológico Nacional (AEMET) o aplicaciones de clima especializadas.
 ```
 
 Vemos en la respuesta del LLM que ha decidido llamar a la tool con unos parámetros:
 ```
-  - tool_calls: [ToolCall(function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '1'}))]
+  - tool_calls: [
+      function=Function(name='consultar_clima', arguments={'ciudad': 'Barcelona', 'dias': '2'}),
+    ]
 ```
+
 Si hacemos una llamada que no necesita la tool:
 ```bash
 Introduce una pregunta sobre el clima (o escribe 'salir' para terminar):
@@ -369,7 +391,7 @@ Vemos que en tool_calls vienen 2 llamadas:
 
 Podemos hacer la tool sin scripts externos, que todo venga incluido en el mismo fichero:
 ```bash
-docker exec -ti ollama bash -c "python /app/scrics/tools/tool_temperatura_sin_script.py"
+docker exec -ti ollama bash -c "python /app/lecciones/leccion01/tool_temperatura_sin_script.py"
 ```
 
 ```

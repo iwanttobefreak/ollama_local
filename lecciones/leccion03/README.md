@@ -1,4 +1,4 @@
-Uso de agentes
+**Uso de agentes**
 
 OPEN CODE
 Instalamos open code y lo copiamos en el PATH:
@@ -11,7 +11,12 @@ curl -fsSL https://opencode.ai/install | bash
 cp /root/.opencode/bin/opencode /usr/local/bin/
 ```
 
-Nos abre una terminal que tira del agente **OpenCode Zen**
+Abrimos opencode:
+```
+opencode
+```
+
+Nos abre una terminal que tira del agente **Big Pickle**
 
 Con el tabulador vamos cambiando de Plan (para planificar sin ejecutar) a Build (para ejecutar).
 
@@ -25,7 +30,7 @@ Documentación:
 
 https://opencode.ai/docs/providers/#ollama
 
-Creamos el fichero /app/scrics/agentes
+Usamos el fichero opencode.json
 ```json
 {
     "$schema": "https://opencode.ai/config.json",
@@ -47,7 +52,7 @@ Creamos el fichero /app/scrics/agentes
 ```
 Ejecutamos opencode apuntando al directorio de proyecto donde tenemos el fichero de configuración.
 ```bash
-opencode /app/scrics/agentes
+opencode /app/lecciones/leccion03
 ```
 
 Pulsamos ctrl+p y seleccionamos provider:
@@ -58,4 +63,4 @@ Seleccionamos nuestro modelo LLM en local:
 
 <img src="recursos/seleccionar_LLM_local.png" alt="Seleccionar LLM" width="600"/>
 
-Como ollama es solo un LLM, no nos hará ninguna acción
+Como ollama es solo un LLM, no nos hará ninguna acción.

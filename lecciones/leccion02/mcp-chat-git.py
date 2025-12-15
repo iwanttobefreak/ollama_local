@@ -19,12 +19,20 @@ def enviar_orden_mcp(orden):
     if resp.ok:
         print("[RESPUESTA MCP]")
         print(resp.text)
+        try:
+            data = resp.json()
+            content = data.get("message", {}).get("content", "")
+            if content:
+                print("\n[RESPUESTA FORMATEADA]")
+                print(content)
+        except Exception as e:
+            print(f"[DEBUG] No se pudo formatear la respuesta: {e}")
     else:
         print("[ERROR]")
         print(resp.text)
 
 def main():
-    print("Prompt MCP server (filesystem). Escribe tu orden (exit para salir):")
+    print("Prompt MCP server (git). Escribe tu orden (exit para salir):")
     while True:
         orden = input(">>> ").strip()
         if orden.lower() in ("exit", "salir", "quit"):
@@ -33,3 +41,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

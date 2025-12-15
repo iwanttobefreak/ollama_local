@@ -23,6 +23,7 @@ Creamos los directorios para DIR_LLM y DIR_DATOS y los otros parámetros podría
 ```bash
 DIR_LLM=/ollama/llm
 DIR_DATOS=/ollama/datos
+DIR_LECCIONES=${PWD}/lecciones
 PUERTO_OLLAMA=11434
 PUERTO_FLASK=5000
 MEMORIA=16g

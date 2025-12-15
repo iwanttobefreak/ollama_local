@@ -1,3 +1,6 @@
+**Usar MCP servers con LLM**
+Un MCP server es un conjunto de tools en un paquete para poder usarlas.
+
 Entramos de forma interactiva para lanzar comandos:
 ```
 docker exec -ti ollama bash
@@ -21,7 +24,7 @@ https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
 
 Se puede usar con docker o npx. Lo instalamos con npx (que ya viene en la imagen de docker)
 
-Tenemos el fichero **scrics/tools/mcp-bridge-config-filesystem.json** que hace de conector entre LLM y MCP:
+Tenemos el fichero **lecciones/leccion02/mcp-bridge-config-filesystem.json** que hace de conector entre LLM y MCP:
 ```python
 {
   "mcpServers": {
@@ -38,7 +41,7 @@ Tenemos el fichero **scrics/tools/mcp-bridge-config-filesystem.json** que hace d
 ```
 Lo ejecutamos con:
 ```bash
-ollama-mcp-bridge --config /app/scrics/tools/mcp-bridge-config-filesystem.json
+ollama-mcp-bridge --config /app/lecciones/leccion02/mcp-bridge-config-filesystem.json
 ```
 Vemos que la primera vez se descarga el MCP server. Se queda escuchando en el puerto 8000 (modificarlo en el fichero). Vemos también que carga las tools del MCP server:
 ```
@@ -51,7 +54,7 @@ docker exec -ti ollama bash
 ````
 
 Levantamos el chat con mcp-server
-python /app/scrics/tools/mcp-chat-filesystem.py
+python /app/lecciones/leccion02/mcp-chat-filesystem.py
 
 Ahora le pedimos lo mismo que antes y nos crea el fichero:
 ```bash
@@ -95,7 +98,7 @@ Para este MCP server se necista el paquete uvx de os que ya está instalado en l
 
 Lanzamos el conector entre LLM y MCP server
 ```
-ollama-mcp-bridge --config /app/scrics/tools/mcp-bridge-config-git.json
+ollama-mcp-bridge --config /app/lecciones/leccion02/mcp-bridge-config-git.json
 ```
 Vemos que la primera vez nos instala las herramientas para el MCP server
 
@@ -105,7 +108,7 @@ docker exec -ti ollama bash
 ```
 
 ```
-python /app/scrics/tools/mcp-chat-git.py
+python /app/lecciones/leccion02/mcp-chat-git.py
 ```
 
 Preguntamos que herramientas tiene ahora:
@@ -133,6 +136,10 @@ Las herramientas de Git disponibles a través de mí son las siguientes:
 Estas herramientas cubren una variedad de tareas comunes en el uso de Git, desde el seguimiento y marcar cambios hasta la gestión de diferentes ramas y commits.
 ```
 
+Le podemos preguntar por comandos de git:
+
+
+
 Pero si le preguntamos por crear un fichero en el filesystem nos dice que no puede porque no tiene cargado el otro MCP server pero te da respuesta que tiene que ver con git:
 ```
 >>> Crea el fichero /tmp/git.txt
@@ -145,4 +152,37 @@ To create the file `/tmp/git.txt`, we will first need to initialize a Git reposi
 Let's start by initializing a new Git repository in `/tmp/` (assuming you want the repo there), and create `git.txt` inside it.
 ````
 
-Podemos añadir los dos MCP servers al conector, con el fichero 
+Podemos añadir los dos MCP servers al conector, con el fichero mcp-bridge-config-filesystem-y-git.json juntando los dos MCP servers en el bridge:
+
+```json
+{
+  "mcpServers": {
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/tmp"
+      ]
+    }
+  }
+}
+```
+
+Paramos el bridge y levantamos este nuevo bridge con los 2 MCP servers:
+
+```
+ollama-mcp-bridge --config /app/lecciones/leccion02/mcp-bridge-config-filesystem-y-git.json
+```
+
+Vemos que carga las tools de filesystem y de git:
+```
+2025-12-15 23:08:19.521 | INFO     | ollama_mcp_bridge.mcp_manager:_connect_server:114 - Connected to 'git' with 12 tools
+2025-12-15 23:08:20.023 | INFO     | ollama_mcp_bridge.mcp_manager:_connect_server:114 - Connected to 'filesystem' with 14 tools
+```
+
+Ya podemos hacer acciones de git y de filesystem

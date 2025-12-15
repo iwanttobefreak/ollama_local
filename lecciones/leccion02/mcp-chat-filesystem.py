@@ -6,7 +6,7 @@ def enviar_orden_mcp(orden):
     payload = {
         "model": "qwen2.5:latest",
         "messages": [
-            {"role": "system", "content": "Eres un mcp server de git"},
+            {"role": "system", "content": "Eres un mcp server de filesystem"},
             {"role": "user", "content": orden}
         ],
         "stream": False,
