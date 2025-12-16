@@ -1,69 +1,10 @@
 ## Tabla de Contenidos
 
-1. [Introducción](#introducción)
-2. [Creación imágen de docker de Ollama](#creación-imágen-de-docker-de-ollama)
-3. [Lección 1: Tools con Ollama](#lección-1)
-4. [Lección 2: MCP Servers](#lección-2)
+# Índice de Lecciones
 
----
-
-## Introducción
-Ejecución de modelos de APIs y agentes de IA 100% en local sin usar tokens ni servicios externos.
-
-
-
-## Lección 1
-Contenido de la lección...
-
-## Lección 2
-
-**MCP Servers (Model Context Protocol)**
-
-Aprende a crear servidores MCP que exponen herramientas de forma estandarizada.
-
-### ¿Qué aprenderás?
-
-- Diferencia entre Tools directas (Lección 1) y MCP Servers
-- Crear un servidor MCP básico
-- Conectar Ollama con servidores MCP
-- Arquitectura cliente-servidor para LLMs
-
-### Archivos principales:
-
-- `mcp_server_minimo.py` - Ejemplo mínimo de servidor MCP
-- `mcp_client_minimo.py` - Cliente básico para probar MCP
-- `mcp_server_temperatura.py` - Servidor que usa el script de temperatura
-- `mcp_client_temperatura.py` - Cliente completo con Ollama
-- `test_leccion02.sh` - Script interactivo para probar todo
-
-### Inicio rápido:
-
-```bash
-cd lecciones/leccion02
-./test_leccion02.sh
-```
-
-O ejecuta directamente:
-
-```bash
-cd lecciones/leccion02
-pip install mcp ollama
-python3 mcp_client_minimo.py  # Ejemplo simple
-python3 mcp_client_temperatura.py  # Ejemplo completo
-```
-
-### Conceptos clave:
-
-**Arquitectura MCP:**
-```
-Usuario → Cliente → Ollama ⟷ MCP Server → Recursos externos
-```
-
-**Ventajas sobre Tools directas:**
-- ✅ Separación de responsabilidades
-- ✅ Reutilización entre múltiples clientes
-- ✅ Protocolo estandarizado
-- ✅ Escalabilidad mejorada
-
-Ver documentación completa: [lecciones/leccion02/README.md](lecciones/leccion02/README.md)
-
+- [Lección 00: Creación imagen Docker de Ollama](lecciones/leccion00/README.md)
+- [Lección 01: omo usar TOOLS con un LLM](lecciones/leccion01/README.md)
+- [Lección 02: Usar MCP servers con LLM](lecciones/leccion02/README.md)
+- [Lección 03: Agentes con opencode en local](lecciones/leccion03/README.md)
+- [Lección 04: Contexto en modelos LLM ](lecciones/leccion04/README.md)
+- [Lección 05: Persistencia con RAG](lecciones/leccion05/README.md)

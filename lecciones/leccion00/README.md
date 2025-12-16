@@ -6,7 +6,19 @@ cd ollama_local
 docker build -t ollama .
 ```
 
+Mostramos la imagen creada:
+```bash
+docker images
+```
+
+```bash
+REPOSITORY                                   TAG              IMAGE ID      CREATED       SIZE
+localhost/ollama                             latest           ed54152d23d1  22 hours ago  5.56 GB
+```
+
 ### Parámetros Docker
+
+Pequeña explicación de que es cada parámetro para arrancar el contenedor de docker:
 
 - **Puertos:**
   - `PUERTO_OLLAMA`: Puerto de la API Ollama (ejemplo: 11434)
@@ -19,24 +31,25 @@ docker build -t ollama .
 - **Otros:**
   - `MEMORIA`: Memoria asignada al contenedor Docker (si no tienes GPU, pon suficiente RAM)
 
-Creamos los directorios para DIR_LLM y DIR_DATOS y los otros parámetros podrían ser:
+Tenemos que definir dos volumenes en local para los datos (que no serán muchos) y los LLM (que si ocupan mucho), por ejemplo:
+- /ollama/datos
+- /ollama/llm
+
+Definimos las variables con el comando:
 ```bash
-DIR_LLM=/ollama/llm
-DIR_DATOS=/ollama/datos
-DIR_LECCIONES=${PWD}/lecciones
-PUERTO_OLLAMA=11434
-PUERTO_FLASK=5000
-MEMORIA=16g
+export DIR_LLM=/ollama/llm
+export DIR_DATOS=/ollama/datos
+export DIR_LECCIONES=${PWD}/lecciones
+export PUERTO_OLLAMA=11434
+export PUERTO_FLASK=5000
+export MEMORIA=16g
+```
+Creamos los directorios de datos y llm si no están creados:
+```bash
+mkdir -p $DIR_LLM $DIR_DATOS
 ```
 
-Descargarmos el repositorio y desde dentro del repositorio construimos la imagen del repositorio:
-```
-git clone https://github.com/iwanttobefreak/ollama_local.git
-cd ollama_local
-docker build -t ollama .
-```
-
-Una vez construida la imagen, levantamos el contenedor de docker
+Levantamos el contenedor de docker con la imagen que hemos creado:
 
 ```bash
 docker run --rm -d --name ollama \
@@ -50,15 +63,16 @@ docker run --rm -d --name ollama \
   ollama
 ```
 
-Mostrar LLMs cargados, esperamos 30 segundos que arranque y tiene por defecto llama3.2:1b que es ligero (en el momento de esta documentación, supongo que cambiará con el tiempo porque esto va muy rápido):
+Para mostrar los LLMs cargados, esperamos 30 segundos que arranque y tiene por defecto llama3.2:1b que es ligero (en el momento de esta documentación, supongo que cambiará con el tiempo porque esto va muy rápido):
 ```bash
 docker exec -ti ollama bash -c "ollama list"
-
+```
+```
 NAME    ID    SIZE    MODIFIED
 llama3.2:1b    baf6a787fdff    1.3 GB    9 seconds ago
 ```
 
-También los podemos mostrar por la API:
+También podemos mostrar los modelos cargados por la API:
 ```bash
 curl http://localhost:11434/api/tags
 ```
